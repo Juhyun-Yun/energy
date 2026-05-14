@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>1차시 · 불씨를 살려라!</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <style>
+    :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0b1029; color: white; }
+    #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
+
+    @keyframes twinkle { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+    @keyframes flicker {
+      0%,100% { transform: translateX(-50%) scaleY(1)    scaleX(1);    }
+      25%     { transform: translateX(-50%) scaleY(1.04) scaleX(0.96); }
+      50%     { transform: translateX(-50%) scaleY(0.97) scaleX(1.05); }
+      75%     { transform: translateX(-50%) scaleY(1.06) scaleX(0.97); }
+    }
+    @keyframes sparkUp {
+      0%   { transform: translate(var(--dx, 0px), 0)     scale(1);   opacity: 1; }
+      100% { transform: translate(var(--dx2, 0px), -200px) scale(0.2); opacity: 0; }
+    }
+    @keyframes pop {
+      0% { transform: scale(0.6); opacity: 0; }
+      60%{ transform: scale(1.1); opacity: 1; }
+      100%{ transform: scale(1); }
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-60px); opacity: 0; }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%     { transform: translateX(-4px); }
+      75%     { transform: translateX(4px); }
+    }
+    @keyframes warnPulse {
+      0%,100% { box-shadow: inset 0 0 0 0 rgba(239,68,68,0); }
+      50%     { box-shadow: inset 0 0 80px 0 rgba(239,68,68,0.35); }
+    }
+
+    .anim-twinkle { animation: twinkle 2.5s ease-in-out infinite; }
+    .anim-flicker { animation: flicker 0.35s ease-in-out infinite; transform-origin: bottom center; }
+    .anim-pop     { animation: pop 0.4s ease-out both; }
+    .anim-shake   { animation: shake 0.4s ease-in-out; }
+    .warn         { animation: warnPulse 0.9s ease-in-out infinite; }
+    .font-cute  { font-family: 'Do Hyeon','Jua','Pretendard Variable',Pretendard,sans-serif; letter-spacing: -0.01em; }
+    .font-title { font-family: 'Jua','Pretendard Variable',Pretendard,sans-serif; letter-spacing: -0.01em; }
+
+    /* 불기 버튼 숨쉬기 효과 */
+    @keyframes breathRefill {
+      0%   { width: 0%; }
+      100% { width: 100%; }
+    }
+    #btn-blow.breathing #btn-blow-bar { animation: breathRefill 0.9s linear forwards; }
+    #btn-blow.breathing { background-color: rgba(100,116,139,0.85) !important; cursor: wait; }
+    #btn-blow.breathing #btn-blow-icon::before { content: '🫁'; }
+    #btn-blow.breathing #btn-blow-icon { font-size: 0; }
+    #btn-blow.breathing #btn-blow-icon::before { font-size: 1.5rem; }
+    #btn-blow.breathing #btn-blow-label { opacity: 0.7; }
+    #btn-blow.breathing #btn-blow-label::after { content: ' (들이쉬는 중...)'; }
+    #btn-blow.breathing #btn-blow-label { font-size: 0; }
+    #btn-blow.breathing #btn-blow-label::after { font-size: 1rem; }
+
+    .spark {
+      position: absolute; width: 6px; height: 6px;
+      border-radius: 9999px;
+      background: radial-gradient(circle, #fef3c7, #fbbf24 60%, #f97316);
+      box-shadow: 0 0 8px #fbbf24;
+      pointer-events: none;
+      animation: sparkUp 1.2s ease-out forwards;
+    }
+    .float-text {
+      position: absolute; font-weight: 800; color: #fde68a;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      pointer-events: none;
+      animation: floatUp 0.9s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage-wrapper">
+    <div id="stage">
+
+      <!-- 배경 -->
+      <div class="absolute inset-0 bg-gradient-to-b from-[#0b1029] via-[#1a1a3a] to-[#2a1a2e]"></div>
+      <div id="stars" class="absolute inset-0 pointer-events-none"></div>
+      <svg class="absolute bottom-0 left-0 w-full" viewBox="0 0 1280 200" preserveAspectRatio="none" style="height: 200px;">
+        <path fill="#1e1b4b" d="M0,140 L120,100 L240,130 L380,80 L520,120 L680,90 L820,130 L960,80 L1120,120 L1280,100 L1280,200 L0,200 Z"></path>
+        <path fill="#0f0a24" d="M0,170 L160,140 L320,170 L500,130 L680,160 L860,135 L1040,165 L1220,135 L1280,160 L1280,200 L0,200 Z"></path>
+      </svg>
+
+      <!-- 상단바 (높이 60) -->
+      <header class="absolute top-0 left-0 right-0 h-15 z-20 flex items-center justify-between px-5 bg-black/40 backdrop-blur border-b border-white/15" style="height: 60px;">
+        <a href="index.html" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-bold text-white shadow active:scale-95 transition">
+          <span class="text-lg">←</span> 지도로
+        </a>
+        <div class="text-center">
+          <div class="text-[11px] text-amber-300 font-extrabold tracking-widest">MISSION 1</div>
+          <h1 class="text-xl font-extrabold leading-tight">🔥 에너지를 깨워볼까?</h1>
+        </div>
+        <div class="w-24 text-right tabular-nums text-sm text-white/80 font-bold">
+          ⏱ <span id="timer">00:00</span>
+        </div>
+      </header>
+
+      <!-- ============ 1) 인트로 (가로 2-컬럼) ============ -->
+      <section id="screen-intro" class="absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+        <div class="h-full flex items-center justify-center p-5 gap-5">
+
+          <!-- 왼쪽: 히어로 + 스토리 -->
+          <div class="w-[42%] h-full bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-2xl flex flex-col anim-pop">
+            <div class="text-center">
+              <div class="text-8xl mb-2 leading-none">🔥</div>
+              <div class="inline-block px-4 py-1 rounded-full bg-amber-500/30 border border-amber-300/50 text-amber-200 font-extrabold text-sm tracking-[0.25em] mb-3">
+                MISSION 1
+              </div>
+              <h2 class="text-4xl font-extrabold mb-2">에너지를 깨워볼까?</h2>
+              <p class="text-amber-300 text-base font-bold">미션 1 · 단원 도입</p>
+            </div>
+
+            <div class="flex-1 flex items-center mt-5">
+              <div class="bg-white/10 rounded-2xl p-5 border border-white/15 w-full text-center">
+                <div class="text-6xl mb-2 leading-none">🌃</div>
+                <p class="text-lg leading-relaxed">
+                  캄캄한 밤, 모닥불이 점점 작아지고 있어요.<br>
+                  <b class="text-amber-300 text-xl">장작 5개</b>로<br>
+                  불씨를 살려보세요!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 오른쪽: 왜 + 방법 + 마이크 + 시작 -->
+          <div class="w-[55%] h-full flex flex-col gap-3">
+
+            <!-- 왜 -->
+            <div class="bg-amber-500/15 border-2 border-amber-300/40 rounded-2xl p-4">
+              <div class="flex items-center gap-2 text-amber-200 font-extrabold text-lg mb-1">
+                <span class="text-2xl">🤔</span> 우리는 왜 이 활동을 할까요?
+              </div>
+              <p class="text-white/95 text-base leading-relaxed">
+                우리가 매일 쓰는 <b class="text-amber-200">에너지</b>는 모두 <b class="text-amber-200">자원</b>에서 나와요.
+                그런데 자원은 정말 끝없이 있을까요? 모닥불을 살려보면서 함께 알아봐요!
+              </p>
+            </div>
+
+            <!-- 어떻게 -->
+            <div class="bg-white/10 rounded-2xl p-4 border border-white/15">
+              <div class="text-white/90 font-extrabold text-lg mb-2">🎮 어떻게 살릴까요?</div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center gap-3 bg-white/10 rounded-xl p-3 border border-white/10">
+                  <div class="text-4xl">🪵</div>
+                  <div>
+                    <div class="font-extrabold text-amber-200 text-base">장작 넣기</div>
+                    <div class="text-white/85 text-sm">불을 크게 살려요.<br><b>딱 5개만!</b></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 bg-white/10 rounded-xl p-3 border border-white/10">
+                  <div class="text-4xl">💨</div>
+                  <div>
+                    <div class="font-extrabold text-sky-200 text-base">후~ 불기</div>
+                    <div class="text-white/85 text-sm">조금씩 살려요.<br>마음껏 가능!</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 마이크 옵션 -->
+            <label class="flex items-center gap-2 cursor-pointer select-none p-3 rounded-xl bg-fuchsia-500/15 border border-fuchsia-300/30">
+              <input id="mic-toggle" type="checkbox" class="w-5 h-5 accent-fuchsia-400">
+              <span class="text-base"><b>🎤 마이크로 진짜 불기</b> <span class="text-white/65 text-sm">(선택 · 마이크 권한 필요)</span></span>
+            </label>
+
+            <!-- 시작 -->
+            <button id="btn-start"
+                    class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-2xl font-extrabold shadow-xl shadow-orange-500/40 transition active:scale-95 mt-auto">
+              ▶ 시작하기
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 2) 게임 ============ -->
+      <section id="screen-game" class="hidden absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+
+        <!-- HUD: 좌측 상단 -->
+        <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-3 z-20">
+          <div class="flex items-center gap-2 px-3 py-2 rounded-full bg-black/45 backdrop-blur border border-white/15">
+            <span class="text-xl">🪵</span>
+            <div id="wood-dots" class="flex gap-1.5"></div>
+          </div>
+          <div class="flex-1 max-w-md mx-4">
+            <div class="flex items-center justify-between text-[11px] text-white/75 mb-1">
+              <span class="font-bold">🔥 불꽃</span>
+              <span id="flame-pct" class="tabular-nums">0%</span>
+            </div>
+            <div class="h-3 rounded-full bg-black/45 overflow-hidden border border-white/15">
+              <div id="flame-bar" class="h-full bg-gradient-to-r from-red-500 via-orange-400 to-yellow-300 transition-all duration-100" style="width: 60%;"></div>
+            </div>
+          </div>
+          <div id="mic-indicator" class="hidden w-10 h-10 rounded-full bg-fuchsia-500/30 border border-fuchsia-300/50 flex items-center justify-center text-lg">🎤</div>
+        </div>
+
+        <!-- 모닥불 무대 -->
+        <div id="stage-area" class="absolute inset-0 flex items-end justify-center" style="padding-bottom: 130px;">
+          <div class="relative w-[420px] h-[460px] flex items-end justify-center">
+            <div id="glow"
+                 class="absolute left-1/2 -translate-x-1/2 w-80 h-80 rounded-full pointer-events-none"
+                 style="bottom: 60px; background: radial-gradient(circle, rgba(251,191,36,0.6), rgba(249,115,22,0.25) 40%, transparent 70%); transition: transform 0.2s, opacity 0.2s;"></div>
+
+            <div id="flame-wrap"
+                 class="absolute left-1/2 origin-bottom anim-flicker cursor-pointer select-none"
+                 style="bottom: 80px; transform: translateX(-50%) scale(0.6); transition: transform 0.18s ease-out;"
+                 title="여기를 두드려도 불을 살릴 수 있어요!">
+              <svg viewBox="0 0 100 150" width="160" height="240">
+                <defs>
+                  <radialGradient id="flameGrad" cx="50%" cy="80%" r="60%">
+                    <stop offset="0%"   stop-color="#fffbeb"/>
+                    <stop offset="25%"  stop-color="#fde68a"/>
+                    <stop offset="55%"  stop-color="#fbbf24"/>
+                    <stop offset="80%"  stop-color="#f97316"/>
+                    <stop offset="100%" stop-color="#dc2626"/>
+                  </radialGradient>
+                  <radialGradient id="innerGrad" cx="50%" cy="85%" r="40%">
+                    <stop offset="0%" stop-color="#fef3c7" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+                  </radialGradient>
+                </defs>
+                <path d="M50 145 Q 18 110 28 70 Q 36 40 50 10 Q 60 38 68 64 Q 84 100 72 130 Q 62 145 50 145 Z" fill="url(#flameGrad)" />
+                <path d="M50 140 Q 36 115 42 90 Q 46 75 50 60 Q 54 78 58 92 Q 66 115 56 135 Q 53 142 50 140 Z" fill="url(#innerGrad)" />
+              </svg>
+            </div>
+
+            <!-- 장작 -->
+            <div class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center select-none pointer-events-none" style="bottom: 30px;">
+              <div class="flex gap-1">
+                <span class="text-5xl" style="transform: rotate(-12deg); display: inline-block;">🪵</span>
+                <span class="text-5xl" style="transform: rotate(14deg);  display: inline-block;">🪵</span>
+              </div>
+              <span class="text-5xl -mt-3" style="transform: rotate(-2deg); display: inline-block;">🪵</span>
+            </div>
+
+            <!-- 바닥 그림자 -->
+            <div class="absolute left-1/2 -translate-x-1/2 w-72 h-6 rounded-full bg-black/45 blur-md" style="bottom: 22px;"></div>
+
+            <!-- 효과 레이어 -->
+            <div id="sparks" class="absolute left-1/2 -translate-x-1/2 w-0 h-0" style="bottom: 100px;"></div>
+            <div id="floats" class="absolute left-1/2 -translate-x-1/2 w-0 h-0" style="bottom: 170px;"></div>
+          </div>
+        </div>
+
+        <!-- 경고 메시지 -->
+        <div id="hint" class="hidden absolute left-1/2 -translate-x-1/2 z-10 px-5 py-2 rounded-xl bg-red-500/85 backdrop-blur text-white font-extrabold text-base shadow-lg anim-shake"
+             style="top: 90px;">
+          ⚠️ 불꽃이 약해지고 있어요!
+        </div>
+
+        <!-- 하단 버튼 -->
+        <div class="absolute left-0 right-0 z-20 px-5 pb-5" style="bottom: 0;">
+          <div class="max-w-2xl mx-auto flex gap-4">
+            <button id="btn-blow"
+                    class="relative flex-1 py-4 rounded-2xl bg-sky-500/90 hover:bg-sky-400 active:scale-95 text-white font-extrabold text-xl shadow-xl shadow-sky-500/30 transition flex items-center justify-center gap-2 border border-sky-300/40 overflow-hidden">
+              <span id="btn-blow-icon" class="text-2xl">💨</span> <span id="btn-blow-label">후~ 불기</span>
+              <div id="btn-blow-bar" class="absolute left-0 bottom-0 h-1.5 bg-white/80 rounded-full" style="width: 100%;"></div>
+            </button>
+            <button id="btn-wood"
+                    class="flex-1 py-4 rounded-2xl bg-amber-500/90 hover:bg-amber-400 active:scale-95 text-white font-extrabold text-xl shadow-xl shadow-amber-500/30 transition flex items-center justify-center gap-2 border border-amber-300/40 disabled:opacity-40 disabled:cursor-not-allowed">
+              <span class="text-2xl">🪵</span> 장작 넣기
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 3) 결과 (가로 2-컬럼) ============ -->
+      <section id="screen-end" class="hidden absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+        <div class="h-full flex items-center justify-center p-5 gap-5">
+
+          <!-- 왼쪽: 결과 + 통계 -->
+          <div class="w-[42%] h-full bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-2xl flex flex-col items-center justify-center anim-pop">
+            <div id="end-emoji" class="text-9xl mb-3 leading-none">😢</div>
+            <h2 id="end-title" class="text-3xl font-extrabold text-center mb-1">이런! 불이 꺼졌어요</h2>
+            <p id="end-sub" class="text-white/80 text-center text-base mb-6">하지만 정말 잘했어요!</p>
+
+            <div class="grid grid-cols-2 gap-3 w-full">
+              <div class="bg-black/30 rounded-2xl p-3 text-center border border-white/10">
+                <div class="text-xs text-white/70 mb-1">살린 시간</div>
+                <div class="text-3xl font-extrabold text-amber-300 tabular-nums">
+                  <span id="stat-time">0</span><span class="text-base ml-0.5">초</span>
+                </div>
+              </div>
+              <div class="bg-black/30 rounded-2xl p-3 text-center border border-white/10">
+                <div class="text-xs text-white/70 mb-1">사용한 장작</div>
+                <div class="text-3xl font-extrabold text-orange-300 tabular-nums">
+                  <span id="stat-wood">0</span><span class="text-base ml-0.5">개</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 오른쪽: 생각해 봐요 + 버튼 -->
+          <div class="w-[55%] h-full flex flex-col gap-4">
+            <div class="bg-violet-500/15 border-2 border-violet-300/30 rounded-2xl p-5 flex-1">
+              <div class="text-2xl font-title text-violet-200 mb-4">💭 생각해 봐요</div>
+              <ul class="space-y-4 text-2xl text-white/95 font-cute leading-snug">
+                <li class="flex gap-2"><span class="text-violet-300 font-bold shrink-0">1.</span><span>우리가 매일 쓰는 자원 중에서, 장작처럼 <b>점점 줄어드는 자원</b>은 무엇이 있을까요? (예: 석탄, 석유, 가스)</span></li>
+                <li class="flex gap-2"><span class="text-violet-300 font-bold shrink-0">2.</span><span>자원이 다 떨어지면 우리 생활은 어떻게 변할까요?</span></li>
+                <li class="flex gap-2"><span class="text-violet-300 font-bold shrink-0">3.</span><span>자원을 <b>오래 쓰려면</b> 어떤 노력이 필요할까요?</span></li>
+              </ul>
+            </div>
+
+            <div class="flex gap-3">
+              <button id="btn-retry"
+                      class="flex-1 py-4 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-extrabold text-lg border border-white/20 transition active:scale-95">
+                🔁 한 번 더
+              </button>
+              <button id="btn-complete"
+                      class="flex-[1.6] py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-lg shadow-lg shadow-emerald-500/40 transition active:scale-95">
+                ✓ 미션 완료 · 지도로
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    /* ===== 스테이지 스케일 ===== */
+    let __scale = 1;
+    function fitStage() {
+      const stage = document.getElementById('stage');
+      if (!stage) return;
+      __scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      stage.style.transform = `scale(${__scale})`;
+    }
+    window.addEventListener('resize', fitStage);
+    window.addEventListener('orientationchange', fitStage);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', fitStage);
+    fitStage();
+    window.addEventListener('load', fitStage);
+
+    /* ===== 별 ===== */
+    (function makeStars() {
+      const layer = document.getElementById('stars');
+      for (let i = 0; i < 70; i++) {
+        const s = document.createElement('span');
+        s.className = 'anim-twinkle absolute';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top  = Math.random() * 60  + '%';
+        const size = 1 + Math.random() * 2.5;
+        s.style.width = s.style.height = size + 'px';
+        s.style.background = 'white';
+        s.style.borderRadius = '9999px';
+        s.style.boxShadow = '0 0 6px rgba(255,255,255,0.8)';
+        s.style.animationDelay = (Math.random() * 2.5) + 's';
+        s.style.opacity = '0.6';
+        layer.appendChild(s);
+      }
+    })();
+
+    /* ===== 게임 상수 ===== */
+    const MAX_WOOD = 5;
+    const TICK_MS  = 100;
+    const DECAY_WITH_WOOD    = 0.6;
+    const DECAY_WITHOUT_WOOD = 2.6; // 장작 없으면 더 빨리 사그라들도록
+    const BURN_WOOD_EVERY_MS = 4000;
+    const BLOW_GAIN = 5;
+    const WOOD_GAIN = 45;
+    const FLAME_MAX = 100;
+    const BREATH_MS = 900;          // 한 번 불고 다시 들이쉬는 시간
+
+    /* ===== 상태 ===== */
+    let flame = 60, pile = MAX_WOOD, burning = 0, burnTimer = 0;
+    let elapsedMs = 0, started = false, ended = false, loopId = null;
+    let micStream = null, micEnabled = false, woodUsedTotal = 0;
+
+    /* ===== UI ===== */
+    const flameWrap = document.getElementById('flame-wrap');
+    const glow      = document.getElementById('glow');
+    const flameBar  = document.getElementById('flame-bar');
+    const flamePct  = document.getElementById('flame-pct');
+    const woodDots  = document.getElementById('wood-dots');
+    const timerEl   = document.getElementById('timer');
+    const hint      = document.getElementById('hint');
+    const btnWood   = document.getElementById('btn-wood');
+    const stageArea = document.getElementById('stage-area');
+
+    function renderWoodDots() {
+      woodDots.innerHTML = '';
+      for (let i = 0; i < MAX_WOOD; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'inline-block w-2.5 h-2.5 rounded-full ' + (i < pile ? 'bg-amber-300 shadow shadow-amber-400/50' : 'bg-white/15');
+        woodDots.appendChild(dot);
+      }
+    }
+    function renderFlame() {
+      const ratio = Math.max(0, Math.min(1, flame / FLAME_MAX));
+      const scale = 0.25 + ratio * 1.10;
+      flameWrap.style.transform = `translateX(-50%) scale(${scale.toFixed(3)})`;
+      glow.style.transform = `translateX(-50%) scale(${(0.4 + ratio * 0.9).toFixed(3)})`;
+      glow.style.opacity   = (0.3 + ratio * 0.7).toFixed(2);
+      flameBar.style.width = (ratio * 100).toFixed(0) + '%';
+      flamePct.textContent = Math.round(ratio * 100) + '%';
+      if (flame < 25 && !ended) { hint.classList.remove('hidden'); stageArea.classList.add('warn'); }
+      else                       { hint.classList.add('hidden');    stageArea.classList.remove('warn'); }
+    }
+    function renderTimer() {
+      const sec = Math.floor(elapsedMs / 1000);
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      timerEl.textContent = `${m}:${s}`;
+    }
+    function renderAll() {
+      renderWoodDots(); renderFlame(); renderTimer();
+      btnWood.disabled = pile === 0;
+    }
+
+    /* ===== 이펙트 ===== */
+    function spawnSparks(count) {
+      const layer = document.getElementById('sparks');
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.className = 'spark';
+        const dx  = (Math.random() - 0.5) * 40;
+        const dx2 = dx + (Math.random() - 0.5) * 60;
+        s.style.setProperty('--dx',  dx + 'px');
+        s.style.setProperty('--dx2', dx2 + 'px');
+        s.style.left = '-3px'; s.style.bottom = '0px';
+        layer.appendChild(s);
+        setTimeout(() => s.remove(), 1300);
+      }
+    }
+    function floatText(text, color = '#fde68a') {
+      const layer = document.getElementById('floats');
+      const el = document.createElement('div');
+      el.className = 'float-text text-xl';
+      el.textContent = text; el.style.color = color;
+      el.style.left = (Math.random() * 60 - 30) + 'px'; el.style.bottom = '0px';
+      layer.appendChild(el);
+      setTimeout(() => el.remove(), 900);
+    }
+
+    /* ===== 액션 ===== */
+    let lastBlowAt = 0;
+    function canBlow() {
+      return Date.now() - lastBlowAt >= BREATH_MS;
+    }
+    function blow(gain = BLOW_GAIN) {
+      if (ended || !started) return;
+      if (!canBlow()) return;     // 아직 숨을 들이쉬는 중
+      lastBlowAt = Date.now();
+      flame = Math.min(FLAME_MAX, flame + gain);
+      spawnSparks(2);
+      floatText('+' + Math.round(gain), '#7dd3fc');
+      renderFlame();
+      // 버튼에 숨쉬기 게이지 표시
+      const btn = document.getElementById('btn-blow');
+      if (btn) {
+        btn.classList.add('breathing');
+        setTimeout(() => btn.classList.remove('breathing'), BREATH_MS);
+      }
+    }
+    function addWood() {
+      if (ended || !started || pile <= 0) return;
+      pile -= 1; burning += 1; woodUsedTotal += 1;
+      flame = Math.min(FLAME_MAX, flame + WOOD_GAIN);
+      burnTimer = 0;
+      spawnSparks(8);
+      floatText('🪵 +' + WOOD_GAIN, '#fcd34d');
+      renderAll();
+    }
+
+    /* ===== 루프 ===== */
+    function tick() {
+      if (ended) return;
+      elapsedMs += TICK_MS;
+      if (burning > 0) {
+        burnTimer += TICK_MS;
+        if (burnTimer >= BURN_WOOD_EVERY_MS) { burnTimer = 0; burning -= 1; }
+      }
+      const decay = burning > 0 ? DECAY_WITH_WOOD : DECAY_WITHOUT_WOOD;
+      flame = Math.max(0, flame - decay);
+      if (flame <= 0) { endGame(); return; }
+      if (Math.random() < 0.15) spawnSparks(1);
+      renderAll();
+    }
+    function startGame() {
+      if (started) return;
+      started = true; ended = false;
+      flame = 60; pile = MAX_WOOD; burning = 0; burnTimer = 0;
+      elapsedMs = 0; woodUsedTotal = 0;
+      renderAll();
+      loopId = setInterval(tick, TICK_MS);
+    }
+    function endGame() {
+      if (ended) return;
+      ended = true; clearInterval(loopId); stopMic();
+      const sec = Math.floor(elapsedMs / 1000);
+      document.getElementById('stat-time').textContent = sec;
+      document.getElementById('stat-wood').textContent = woodUsedTotal;
+      const goodJob = sec >= 30;
+      document.getElementById('end-emoji').textContent = goodJob ? '🌟' : '😢';
+      document.getElementById('end-title').textContent = goodJob ? '와! 정말 오래 살렸어요!' : '이런! 불이 꺼졌어요';
+      document.getElementById('end-sub').textContent = goodJob
+        ? '에너지를 잘 이용했네요. 그런데도… 장작은 결국 떨어졌죠?'
+        : '괜찮아요! 장작에는 끝이 있다는 걸 알게 되었어요.';
+      setTimeout(() => {
+        document.getElementById('screen-game').classList.add('hidden');
+        document.getElementById('screen-end').classList.remove('hidden');
+      }, 400);
+    }
+
+    /* ===== 마이크 ===== */
+    async function startMic() {
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const src = ctx.createMediaStreamSource(micStream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 512;
+        src.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        document.getElementById('mic-indicator').classList.remove('hidden');
+        let lastBlow = 0;
+        function loop() {
+          if (!micEnabled) return;
+          analyser.getByteFrequencyData(data);
+          let sum = 0, cnt = 0;
+          for (let i = 40; i < data.length; i++) { sum += data[i]; cnt++; }
+          const avg = sum / cnt;
+          const ind = document.getElementById('mic-indicator');
+          ind.style.transform = `scale(${1 + Math.min(0.6, avg / 80)})`;
+          if (avg > 35 && Date.now() - lastBlow > 180 && started && !ended) {
+            lastBlow = Date.now();
+            blow(Math.min(10, 3 + avg / 18));
+          }
+          requestAnimationFrame(loop);
+        }
+        loop();
+        return true;
+      } catch (err) {
+        alert('마이크 권한을 받지 못했어요. 손가락으로 두드리거나 버튼을 사용해 주세요!');
+        return false;
+      }
+    }
+    function stopMic() {
+      micEnabled = false;
+      if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+      document.getElementById('mic-indicator').classList.add('hidden');
+    }
+
+    /* ===== 이벤트 ===== */
+    document.getElementById('btn-start').addEventListener('click', async () => {
+      const wantMic = document.getElementById('mic-toggle').checked;
+      if (wantMic) {
+        micEnabled = true;
+        const ok = await startMic();
+        if (!ok) micEnabled = false;
+      }
+      document.getElementById('screen-intro').classList.add('hidden');
+      document.getElementById('screen-game').classList.remove('hidden');
+      startGame();
+    });
+    document.getElementById('btn-blow').addEventListener('click', () => blow());
+    document.getElementById('btn-wood').addEventListener('click', addWood);
+    flameWrap.addEventListener('click', () => blow(BLOW_GAIN - 1));
+    document.addEventListener('keydown', (e) => {
+      if (!started || ended) return;
+      if (e.code === 'Space') { e.preventDefault(); blow(); }
+      if (e.key === 'w' || e.key === 'W' || e.key === 'ㅈ') addWood();
+    });
+    document.getElementById('btn-retry').addEventListener('click', () => {
+      document.getElementById('screen-end').classList.add('hidden');
+      document.getElementById('screen-game').classList.remove('hidden');
+      started = false; startGame();
+    });
+    document.getElementById('btn-complete').addEventListener('click', () => {
+      const sec = Math.floor(elapsedMs / 1000);
+      try {
+        const KEY = 'energy-explorer-v1';
+        const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+        saved.completed = Array.isArray(saved.completed) ? saved.completed : [];
+        if (!saved.completed.includes(1)) saved.completed.push(1);
+        localStorage.setItem(KEY, JSON.stringify(saved));
+      } catch {}
+      if (window.appHelpers) appHelpers.reportProgress(1, { score: sec, time: sec, wood: woodUsedTotal });
+      location.href = 'index.html';
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>

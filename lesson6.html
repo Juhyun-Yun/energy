@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>8~9차시 · 에코 하우스 탐구하기</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <style>
+    :root { 
+      font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+      --primary: #10b981;
+      --accent: #3b82f6;
+      --glass: rgba(255, 255, 255, 0.8);
+    }
+    
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #0f172a; }
+    #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; background: #000; }
+
+    /* House Base */
+    #house-container {
+      position: absolute;
+      inset: 0;
+      background-image: url('eco_modern_house_base_1778654675747.png');
+      background-size: cover;
+      background-position: center;
+      transition: all 0.8s ease;
+    }
+
+    /* Highlight Overlays */
+    .highlight {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.5s ease;
+      border: 3px solid #10b981;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .active-highlight { opacity: 1 !important; }
+
+    /* Smart Tags - Positioned precisely */
+    .smart-tag {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+      z-index: 50;
+    }
+    .smart-tag.visible { opacity: 1; transform: translateY(0); }
+    
+    .tag-label {
+      background: #10b981;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 2px solid white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tag-line {
+      width: 2px;
+      height: 40px;
+      background: linear-gradient(to bottom, white, transparent);
+    }
+
+    /* Pulse for unselected items */
+    @keyframes hint { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; } }
+    .hint-dot {
+      position: absolute;
+      width: 20px; height: 20px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: hint 2s infinite;
+      z-index: 40;
+    }
+
+    /* UI Styling */
+    .glass-sidebar {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      width: 320px;
+      height: 100%;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 60;
+    }
+
+    .tech-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 9px 14px;
+      border-radius: 12px;
+      text-align: left;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tech-btn:hover { background: rgba(255, 255, 255, 0.15); transform: translateX(8px); }
+    .tech-btn.active { background: #10b981; border-color: white; transform: translateX(12px); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+
+    .font-title { font-family: 'Jua', sans-serif; }
+    .font-cute { font-family: 'Do Hyeon', 'Jua', sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="stage-wrapper">
+    <div id="stage">
+      
+      <!-- House Container -->
+      <div id="house-container" style="left: 320px; right: 0; width: 960px;">
+        <!-- Highlights -->
+        <div id="hl-solar" class="highlight" style="top: 9%; left: 20%; width: 40%; height: 20%; transform: skewX(-20deg);"></div>
+        <div id="hl-window" class="highlight" style="top: 42%; left: 24%; width: 12%; height: 28%;"></div>
+        <div id="hl-window-2" class="highlight" style="top: 23%; left: 50%; width: 25%; height: 22%;"></div>
+        <div id="hl-garden" class="highlight" style="top: 13%; left: 56%; width: 18%; height: 10%;"></div>
+        <div id="hl-walls" class="highlight" style="top: 28%; left: 15%; width: 6%; height: 22%; background: rgba(16, 185, 129, 0.3);"></div>
+        <div id="hl-led" class="highlight" style="top: 55%; left: 30%; width: 9%; height: 10%;"></div>
+
+        <!-- Tags (Positioned on the house features) -->
+        <div id="tag-solar" class="smart-tag" style="top: 6%; left: 36%; transform: translateX(-50%);">
+          <div class="tag-label"><span>☀️</span> 태양광 발전 패널</div>
+          <div class="tag-line" style="height: 20px;"></div>
+        </div>
+        <div id="tag-window" class="smart-tag" style="top: 20%; left: 62%; transform: translateX(-50%);">
+          <div class="tag-label"><span>🪟</span> 3중 단열 유리창</div>
+          <div class="tag-line" style="height: 20px;"></div>
+        </div>
+        <div id="tag-insulation" class="smart-tag" style="top: 25%; left: 18%; transform: translateX(-50%);">
+          <div class="tag-label"><span>🧥</span> 벽면 고성능 단열재</div>
+          <div class="tag-line" style="height: 20px;"></div>
+        </div>
+        <div id="tag-led" class="smart-tag" style="top: 52%; left: 34%; transform: translateX(-50%);">
+          <div class="tag-label"><span>💡</span> LED 조명</div>
+          <div class="tag-line" style="height: 15px;"></div>
+        </div>
+        <div id="tag-vent" class="smart-tag" style="top: 25%; left: 80%; transform: translateX(-50%);">
+          <div class="tag-label"><span>🌬️</span> 자연 환기 시스템</div>
+          <div class="tag-line"></div>
+        </div>
+        <div id="tag-water" class="smart-tag" style="top: 82%; left: 15%; transform: translateX(-50%);">
+          <div class="tag-label"><span>💧</span> 절수형 시스템</div>
+          <div class="tag-line"></div>
+        </div>
+        <div id="tag-garden" class="smart-tag" style="top: 10%; left: 65%; transform: translateX(-50%);">
+          <div class="tag-label"><span>🌿</span> 옥상 정원</div>
+          <div class="tag-line" style="height: 15px;"></div>
+        </div>
+      </div>
+
+      <!-- Sidebar UI -->
+      <aside class="glass-sidebar">
+        <div class="mb-2">
+          <div class="text-[10px] text-emerald-400 font-black tracking-[0.2em] uppercase font-outfit">Mission 6</div>
+          <h1 class="text-xl font-black text-white font-title leading-tight">완벽한 에코 하우스의<br>비밀을 찾아보자!</h1>
+          <p class="text-slate-400 text-xs mt-1 font-cute">우리 함께 비밀을 찾아볼까?</p>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-2">
+          <button class="tech-btn" data-id="solar">
+            <span class="text-2xl">☀️</span>
+            <div>
+              <div class="font-black text-sm">태양광 발전</div>
+              <div class="text-[10px] opacity-70">에너지를 스스로 만들어요</div>
+            </div>
+          </button>
+          <button class="tech-btn" data-id="insulation">
+            <span class="text-2xl">🧥</span>
+            <div>
+              <div class="font-black text-sm">고성능 단열재</div>
+              <div class="text-[10px] opacity-70">열이 새나가지 않게 막아요</div>
+            </div>
+          </button>
+          <button class="tech-btn" data-id="window">
+            <span class="text-2xl">🪟</span>
+            <div>
+              <div class="font-black text-sm">3중 단열 유리창</div>
+              <div class="text-[10px] opacity-70">특수 코팅된 3겹의 유리예요</div>
+            </div>
+          </button>
+          <button class="tech-btn" data-id="led">
+            <span class="text-2xl">💡</span>
+            <div>
+              <div class="font-black text-sm">LED 조명</div>
+              <div class="text-[10px] opacity-70">적은 전기로 밝게 비춰요</div>
+            </div>
+          </button>
+          <button class="tech-btn" data-id="vent">
+            <span class="text-2xl">🌬️</span>
+            <div>
+              <div class="font-black text-sm">자연 환기</div>
+              <div class="text-[10px] opacity-70">바람으로 시원하게 만들어요</div>
+            </div>
+          </button>
+          <button class="tech-btn" data-id="garden">
+            <span class="text-2xl">🌿</span>
+            <div>
+              <div class="font-black text-sm">옥상 정원</div>
+              <div class="text-[10px] opacity-70">식물이 열을 흡수해요</div>
+            </div>
+          </button>
+          <button class="tech-btn" data-id="water">
+            <span class="text-2xl">💧</span>
+            <div>
+              <div class="font-black text-sm">절수 시스템</div>
+              <div class="text-[10px] opacity-70">소중한 물을 아껴 써요</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="mt-auto pt-3 border-t border-white/10">
+          <div class="flex justify-between items-end mb-2">
+            <div class="text-xs text-slate-400 font-bold font-title">탐험 진행도</div>
+            <div class="text-lg font-black text-emerald-400" id="progress-text">0 / 7</div>
+          </div>
+          <button id="btn-complete" disabled class="w-full py-3 rounded-2xl bg-emerald-500 text-white font-black shadow-lg opacity-40 transition-all active:scale-95">
+            탐험 완료!
+          </button>
+        </div>
+      </aside>
+
+      <!-- Back Button -->
+      <a href="index.html" class="absolute top-6 right-6 z-[70] flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold backdrop-blur-md transition active:scale-95">
+        <span>←</span> 지도로
+      </a>
+
+      <!-- Detail Info Overlay -->
+      <div id="detail-card" class="absolute bottom-8 right-8 w-96 bg-white/95 backdrop-blur-xl p-8 rounded-[2rem] border-2 border-emerald-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.2)] hidden z-[70] anim-pop">
+        <div class="flex items-center gap-5 mb-5">
+          <div id="detail-icon" class="text-5xl drop-shadow-sm">☀️</div>
+          <div>
+            <h3 id="detail-title" class="text-2xl font-black text-slate-900 font-title">태양광 발전</h3>
+            <div class="text-xs font-black text-emerald-600 font-title">친환경 에너지 기술</div>
+          </div>
+        </div>
+        <p id="detail-desc" class="text-slate-700 text-base font-bold leading-relaxed mb-6">
+          지붕에 설치된 패널이 햇빛을 전기로 바꿔줍니다. 화석 연료를 쓰지 않아 지구가 좋아해요!
+        </p>
+        <div class="bg-emerald-50 rounded-2xl p-4 flex items-center justify-between border border-emerald-200">
+          <span class="text-sm font-black text-emerald-800 font-title">핵심 효과</span>
+          <span id="detail-impact" class="text-emerald-700 font-black text-sm">탄소 배출 0% 전력 생산</span>
+        </div>
+      </div>
+
+      <!-- 완성 결과 팝업 -->
+      <div id="result-modal" class="absolute inset-0 z-[100] hidden items-center justify-center bg-slate-900/65 backdrop-blur-md">
+        <div class="bg-white rounded-[2rem] shadow-2xl anim-pop overflow-hidden" style="width: 900px; max-height: 92%;">
+          <!-- 헤더 -->
+          <div class="px-8 py-5 text-white flex items-center justify-between" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <div class="flex items-center gap-3">
+              <div class="text-5xl leading-none">🏆</div>
+              <div>
+                <div class="text-xs font-black tracking-widest opacity-80 font-title">에코 하우스 완성</div>
+                <h2 class="text-3xl font-black font-title leading-tight">우리 집이 절약한 에너지</h2>
+              </div>
+            </div>
+            <button id="btn-close-result" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/35 flex items-center justify-center text-xl active:scale-90 transition">✕</button>
+          </div>
+
+          <!-- 본문 -->
+          <div class="px-8 py-6 grid grid-cols-2 gap-6">
+            <!-- 왼쪽: 종합 절감 -->
+            <div class="flex flex-col gap-3">
+              <div class="rounded-2xl p-5 text-center border-2 border-emerald-200" style="background: linear-gradient(135deg, #ecfdf5, #d1fae5);">
+                <div class="text-xs font-black text-emerald-700 font-title">일반 집 대비 종합 절감</div>
+                <div class="text-6xl font-black text-emerald-700 my-1 font-title">65%</div>
+                <div class="text-xs text-emerald-800 font-bold">에너지 사용량을 줄였어요!</div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-2xl p-3 text-center border-2 border-amber-200 bg-amber-50">
+                  <div class="text-2xl mb-0.5">💰</div>
+                  <div class="text-[11px] font-black text-amber-700 font-title">연간 절약</div>
+                  <div class="text-xl font-black text-amber-700 font-title">약 200만원</div>
+                </div>
+                <div class="rounded-2xl p-3 text-center border-2 border-sky-200 bg-sky-50">
+                  <div class="text-2xl mb-0.5">🌍</div>
+                  <div class="text-[11px] font-black text-sky-700 font-title">CO₂ 감축</div>
+                  <div class="text-xl font-black text-sky-700 font-title">약 2.5톤/년</div>
+                </div>
+              </div>
+              <div class="rounded-2xl p-3 border-2 border-violet-200 bg-violet-50 text-center">
+                <div class="text-xs font-black text-violet-700 font-title">🌳 환산하면</div>
+                <div class="text-base font-black text-violet-800 mt-0.5">소나무 약 380그루 심은 효과!</div>
+              </div>
+            </div>
+
+            <!-- 오른쪽: 기술별 절감 효과 -->
+            <div>
+              <div class="text-sm font-black text-slate-700 font-title mb-2">🔍 기술별 절감 효과</div>
+              <ul class="space-y-1.5 text-sm">
+                <li class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+                  <span class="flex items-center gap-2"><span>☀️</span><span class="font-bold text-slate-800">태양광 발전</span></span>
+                  <span class="font-black text-emerald-600">전기 자체 생산 70%</span>
+                </li>
+                <li class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+                  <span class="flex items-center gap-2"><span>🧥</span><span class="font-bold text-slate-800">고성능 단열재</span></span>
+                  <span class="font-black text-emerald-600">냉난방 -40%</span>
+                </li>
+                <li class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+                  <span class="flex items-center gap-2"><span>🪟</span><span class="font-bold text-slate-800">3중 단열 유리창</span></span>
+                  <span class="font-black text-emerald-600">창 열손실 -70%</span>
+                </li>
+                <li class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+                  <span class="flex items-center gap-2"><span>💡</span><span class="font-bold text-slate-800">LED 조명</span></span>
+                  <span class="font-black text-emerald-600">조명 전력 -80%</span>
+                </li>
+                <li class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+                  <span class="flex items-center gap-2"><span>🌬️</span><span class="font-bold text-slate-800">자연 환기</span></span>
+                  <span class="font-black text-emerald-600">에어컨 -30%</span>
+                </li>
+                <li class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+                  <span class="flex items-center gap-2"><span>🌿</span><span class="font-bold text-slate-800">옥상 정원</span></span>
+                  <span class="font-black text-emerald-600">실내온도 -3~4°C</span>
+                </li>
+                <li class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+                  <span class="flex items-center gap-2"><span>💧</span><span class="font-bold text-slate-800">절수 시스템</span></span>
+                  <span class="font-black text-emerald-600">수도 -30%</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 푸터 -->
+          <div class="px-8 pb-6 flex gap-3">
+            <button id="btn-result-stay" class="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black transition active:scale-95">
+              다시 살펴보기
+            </button>
+            <button id="btn-result-map" class="flex-[1.6] py-3 rounded-2xl text-white font-black shadow-lg active:scale-95 transition" style="background: linear-gradient(to right, #10b981, #059669);">
+              ✓ 미션 완료 · 지도로
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ===== Scale ===== */
+    function fitStage() {
+      const stage = document.getElementById('stage');
+      if (!stage) return;
+      const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      stage.style.transform = `scale(${scale})`;
+    }
+    window.addEventListener('resize', fitStage);
+    fitStage();
+
+    /* ===== Data ===== */
+    const TECH_INFO = {
+      solar: {
+        title: '태양광 발전 패널',
+        icon: '☀️',
+        desc: '지붕 위의 패널들이 햇빛을 받아서 집에서 쓰는 전기를 직접 만들어요. 전기 요금도 아끼고 지구도 지키는 최고의 기술이죠!',
+        impact: '탄소 배출 없는 깨끗한 에너지 생산',
+        tagId: 'tag-solar',
+        hls: ['hl-solar']
+      },
+      insulation: {
+        title: '고성능 단열재',
+        icon: '🧥',
+        desc: '집의 벽과 천장 사이에 두꺼운 단열재를 넣었어요. 마치 겨울에 솜옷을 입은 것처럼 따뜻한 공기가 밖으로 나가지 못하게 막아준답니다.',
+        impact: '냉난방 에너지 40% 이상 절감',
+        tagId: 'tag-insulation',
+        hls: ['hl-walls']
+      },
+      window: {
+        title: '3중 단열 유리창',
+        icon: '🪟',
+        desc: '유리를 세 겹으로 겹치고 그 사이에 특수 가스를 넣은 창문이에요. 일반 창문보다 열을 훨씬 더 잘 막아준답니다.',
+        impact: '창문 열 손실 완벽 차단',
+        tagId: 'tag-window',
+        hls: ['hl-window', 'hl-window-2']
+      },
+      led: {
+        title: 'LED 조명',
+        icon: '💡',
+        desc: '집안의 모든 전구를 LED로 바꿨어요. 같은 밝기를 내면서도 전기를 훨씬 적게 쓰고, 수명도 매우 길어요!',
+        impact: '조명 전력 80% 이상 절감',
+        tagId: 'tag-led',
+        hls: ['hl-led']
+      },
+      vent: {
+        title: '자연 환기 시스템',
+        icon: '🌬️',
+        desc: '에어컨을 켜지 않아도 시원한 공기가 잘 통하도록 집을 지었어요. 공기의 흐름을 이용해서 늘 쾌적한 상태를 유지해요.',
+        impact: '에어컨 사용 시간 획기적 감소',
+        tagId: 'tag-vent',
+        hls: []
+      },
+      garden: {
+        title: '옥상 정원',
+        icon: '🌿',
+        desc: '지붕 위에 식물을 심으면 뜨거운 햇빛을 식물들이 대신 흡수해 줘요. 여름에 집 안 온도를 낮추는 데 큰 도움이 된답니다.',
+        impact: '여름철 실내 온도 3~4도 저하',
+        tagId: 'tag-garden',
+        hls: ['hl-garden']
+      },
+      water: {
+        title: '절수형 시스템',
+        icon: '💧',
+        desc: '한 번 쓴 물을 깨끗하게 걸러서 화장실이나 정원에 다시 쓰는 시스템이에요. 물 자원을 낭비하지 않는 알뜰한 기술이죠!',
+        impact: '수도 사용량 30% 절약',
+        tagId: 'tag-water',
+        hls: []
+      }
+    };
+
+    /* ===== Logic ===== */
+    let discovered = new Set();
+
+    function showTech(id) {
+      // Reset
+      document.querySelectorAll('.tech-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.smart-tag').forEach(t => t.classList.remove('visible'));
+      document.querySelectorAll('.highlight').forEach(h => h.classList.remove('active-highlight'));
+      
+      const info = TECH_INFO[id];
+      const btn = document.querySelector(`.tech-btn[data-id="${id}"]`);
+      btn.classList.add('active');
+      
+      // Show Tag & Highlights
+      document.getElementById(info.tagId).classList.add('visible');
+      info.hls.forEach(hlId => {
+        const hl = document.getElementById(hlId);
+        if (hl) hl.classList.add('active-highlight');
+      });
+
+      // Update Detail Card
+      const card = document.getElementById('detail-card');
+      document.getElementById('detail-icon').textContent = info.icon;
+      document.getElementById('detail-title').textContent = info.title;
+      document.getElementById('detail-desc').textContent = info.desc;
+      document.getElementById('detail-impact').textContent = info.impact;
+      card.classList.remove('hidden');
+
+      // Progress
+      discovered.add(id);
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const count = discovered.size;
+      document.getElementById('progress-text').textContent = `${count} / 7`;
+      const btn = document.getElementById('btn-complete');
+      if (count >= 7) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-40');
+      }
+    }
+
+    document.querySelectorAll('.tech-btn').forEach(btn => {
+      btn.addEventListener('click', () => showTech(btn.dataset.id));
+    });
+
+    const resultModal = document.getElementById('result-modal');
+    function openResult() {
+      resultModal.classList.remove('hidden');
+      resultModal.classList.add('flex');
+    }
+    function closeResult() {
+      resultModal.classList.add('hidden');
+      resultModal.classList.remove('flex');
+    }
+    document.getElementById('btn-complete').addEventListener('click', () => {
+      if (discovered.size < 7) return;
+      openResult();
+    });
+    document.getElementById('btn-close-result').addEventListener('click', closeResult);
+    document.getElementById('btn-result-stay').addEventListener('click', closeResult);
+    document.getElementById('btn-result-map').addEventListener('click', () => {
+      try {
+        const KEY = 'energy-explorer-v1';
+        const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+        saved.completed = Array.isArray(saved.completed) ? saved.completed : [];
+        if (!saved.completed.includes(6)) saved.completed.push(6);
+        localStorage.setItem(KEY, JSON.stringify(saved));
+      } catch {}
+      if (window.appHelpers) appHelpers.reportProgress(6, { score: discovered.size });
+      location.href = 'index.html';
+    });
+
+    // Init
+    window.onload = fitStage;
+  </script>
+</body>
+</html>

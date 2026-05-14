@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>3차시 · 재생에너지 발전소</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <style>
+    :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0c4a6e; color: #0f172a; touch-action: none; }
+    #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
+
+    @keyframes pop      { 0% { transform: scale(0.6); opacity: 0; } 60%{ transform: scale(1.1); opacity: 1; } 100%{ transform: scale(1); } }
+    @keyframes pulseRing{ 0% { transform: scale(0.95); opacity: 0.85; } 100% { transform: scale(1.55); opacity: 0; } }
+    @keyframes float    { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes drift    { 0% { transform: translateX(-10px); } 100% { transform: translateX(40px); } }
+    @keyframes spin     { to { transform: rotate(360deg); } }
+    @keyframes flameOut { 0%{ transform:translate(0,0) scale(1); opacity:1;} 100%{ transform: translate(var(--tx,0), -120px) scale(0.3); opacity: 0; } }
+    @keyframes waterFlow{ 0%{ background-position: 0 0; } 100%{ background-position: 0 60px; } }
+    @keyframes steamRise{ 0%{ transform: translateY(0) scale(1); opacity: 0.7; } 100%{ transform: translateY(-60px) scale(1.6); opacity: 0; } }
+    @keyframes growUp   { 0%{ transform: scaleY(0.5); transform-origin: bottom; opacity: 0.6;} 100%{ transform: scaleY(1); opacity: 1;} }
+    @keyframes flyTo    { 0%{ transform: translate(0,0) scale(1); opacity:1;} 100%{ transform: translate(var(--fx,0), var(--fy,0)) scale(0.3); opacity: 0;} }
+    @keyframes shake    { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-3px);} 75%{transform:translateX(3px);} }
+    @keyframes dropFall { 0%{ transform: translateY(0) scale(1); opacity: 1; } 100%{ transform: translateY(36px) scale(0.6); opacity: 0; } }
+    @keyframes gentlePulse { 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.08); } }
+    @keyframes wireSlide   { 0%{ background-position: 0 0; } 100%{ background-position: 28px 0; } }
+
+    .anim-pop   { animation: pop 0.4s ease-out both; }
+    .anim-float { animation: float 3s ease-in-out infinite; }
+    .anim-drift { animation: drift 30s linear infinite alternate; }
+    .anim-shake { animation: shake 0.3s ease-in-out; }
+    .water-rush {
+      background-color: #2563eb;
+      background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.35) 0px, rgba(255,255,255,0.35) 6px, transparent 6px, transparent 18px);
+      animation: waterFlow 0.5s linear infinite;
+    }
+
+    .font-cute  { font-family: 'Do Hyeon','Jua','Pretendard Variable',Pretendard,sans-serif; letter-spacing: -0.01em; }
+    .font-title { font-family: 'Jua','Pretendard Variable',Pretendard,sans-serif; letter-spacing: -0.01em; }
+
+    .pulse-ring {
+      position: absolute; inset: -10px; border-radius: 9999px;
+      border: 4px solid rgba(168,85,247,0.85);
+      animation: pulseRing 1.8s ease-out infinite;
+      pointer-events: none;
+    }
+
+    /* 햇빛 */
+    .ray { position: absolute; width: 8px; background: linear-gradient(to bottom, rgba(254,243,199,0.95), rgba(251,191,36,0.25)); border-radius: 4px; pointer-events: none; }
+    /* 슬라이더 */
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      height: 12px; border-radius: 9999px; outline: none;
+      background: linear-gradient(to right, #fbbf24 0%, #fbbf24 var(--p,50%), #e2e8f0 var(--p,50%), #e2e8f0 100%);
+    }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 28px; height: 28px; border-radius: 9999px; background: white; border: 3px solid #f59e0b; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; }
+    input[type=range]::-moz-range-thumb { width: 28px; height: 28px; border-radius: 9999px; background: white; border: 3px solid #f59e0b; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; }
+
+    /* 태양광 패널 그리드 (실제 모습) */
+    .panel-grid-cell { background: linear-gradient(135deg, #1e40af 25%, #1e3a8a 25%, #1e3a8a 50%, #1e40af 50%, #1e40af 75%, #1e3a8a 75%); background-size: 8px 8px; border: 1px solid #0f172a; }
+    .steam { position: absolute; width: 30px; height: 30px; border-radius: 9999px; background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,255,255,0.3)); animation: steamRise 2s ease-out infinite; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div id="stage-wrapper">
+    <div id="stage">
+
+      <!-- 배경 풍경 -->
+      <div class="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-200"></div>
+      <div class="absolute top-6 right-12 text-7xl opacity-90 drop-shadow-md anim-float">☀️</div>
+      <div class="absolute top-20 left-8 text-5xl opacity-70 anim-drift">☁️</div>
+      <div class="absolute top-32 left-1/3 text-4xl opacity-60 anim-drift" style="animation-delay: -10s;">☁️</div>
+      <div class="absolute top-24 right-1/4 text-5xl opacity-70 anim-drift" style="animation-delay: -20s;">☁️</div>
+
+      <svg class="absolute left-0 w-full pointer-events-none" viewBox="0 0 1280 720" preserveAspectRatio="none" style="top:0; height: 100%;">
+        <path fill="#94a3b8" fill-opacity="0.55" d="M0,420 L120,340 L240,400 L380,300 L520,380 L680,330 L820,400 L960,310 L1120,380 L1280,340 L1280,720 L0,720 Z"></path>
+        <path fill="#86efac" fill-opacity="0.95" d="M0,560 C220,520 460,600 720,560 C960,520 1080,600 1280,540 L1280,720 L0,720 Z"></path>
+        <path fill="#67e8f9" fill-opacity="0.85" d="M780,610 L1280,580 L1280,720 L780,720 Z"></path>
+        <path fill="#67e8f9" fill-opacity="0.75" d="M50,720 L80,640 L140,620 L220,650 L260,720 Z"></path>
+      </svg>
+
+      <!-- 상단바 -->
+      <header class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-5 bg-white/65 backdrop-blur border-b border-white/70 shadow-sm" style="height: 60px;">
+        <a href="index.html" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-amber-50 text-sm font-bold text-slate-700 shadow-sm transition active:scale-95">
+          <span>←</span> 지도로
+        </a>
+        <div class="text-center">
+          <div class="text-[11px] text-amber-700 font-extrabold tracking-widest">MISSION 3</div>
+          <h1 class="text-xl font-extrabold text-slate-900 leading-tight">🏭 깨끗한 에너지를 직접 만들어보자!</h1>
+        </div>
+        <div class="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white shadow-sm border border-emerald-200">
+          <span class="text-lg">🏭</span>
+          <span id="progress-count" class="text-base font-extrabold text-emerald-700 tabular-nums">0</span>
+          <span class="text-sm text-slate-400">/</span>
+          <span class="text-base font-bold text-slate-500 tabular-nums">6</span>
+        </div>
+      </header>
+
+      <!-- 안내 -->
+      <div class="absolute z-20 left-1/2 -translate-x-1/2 px-5 py-2 rounded-2xl bg-white/90 backdrop-blur shadow-md border border-white text-slate-800 font-extrabold text-base font-title"
+           style="top: 76px;">
+        🌍 발전소 6곳을 모두 가동해서 깨끗한 전기를 만들어봐요!
+      </div>
+
+      <!-- Hub -->
+      <section id="screen-hub" class="absolute z-10" style="top: 130px; left: 0; right: 0; bottom: 0;">
+        <div id="plants" class="absolute inset-0"></div>
+      </section>
+
+      <!-- 발전소 모달 -->
+      <div id="plant-modal" class="absolute inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden anim-pop flex flex-col" style="width: 920px; height: 600px;">
+
+          <!-- 모달 헤더 -->
+          <div id="plant-header" class="px-6 py-4 text-white flex items-center justify-between bg-gradient-to-r from-amber-400 to-orange-500 shrink-0">
+            <div class="flex items-center gap-3 min-w-0">
+              <div id="plant-emoji" class="text-5xl drop-shadow shrink-0">☀️</div>
+              <div class="min-w-0">
+                <h2 id="plant-name" class="text-2xl font-extrabold font-title leading-tight truncate">태양광 발전소</h2>
+                <p id="plant-desc" class="text-sm text-white/90 leading-tight">햇빛으로 전기를 만들어요</p>
+              </div>
+            </div>
+            <button id="plant-close" class="shrink-0 w-10 h-10 rounded-full bg-white/20 hover:bg-white/35 flex items-center justify-center text-xl active:scale-90 transition">✕</button>
+          </div>
+
+          <!-- ① 도입 화면 -->
+          <div id="phase-intro" class="flex-1 flex flex-col p-6 overflow-hidden">
+            <div class="text-center mb-3">
+              <div id="intro-emoji" class="text-7xl mb-1 leading-none">☀️</div>
+              <h3 class="text-2xl font-extrabold text-slate-900 font-title" id="intro-title">태양광 발전소</h3>
+            </div>
+            <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-3">
+              <div class="text-base font-extrabold text-amber-800 mb-1 font-title">💡 어떤 발전소일까요?</div>
+              <p id="intro-desc" class="text-lg text-slate-800 font-cute leading-snug"></p>
+            </div>
+            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-4 mb-4 flex-1">
+              <div class="text-base font-extrabold text-violet-800 mb-1 font-title">🎮 어떻게 가동해요?</div>
+              <p id="intro-howto" class="text-lg text-slate-800 font-cute leading-snug"></p>
+            </div>
+            <button id="btn-start-game" class="w-full py-3.5 rounded-2xl text-white text-xl font-extrabold shadow-xl active:scale-95 transition bg-gradient-to-r from-emerald-500 to-green-600 font-title">
+              ▶ 발전소 가동하기
+            </button>
+          </div>
+
+          <!-- ② 게임 화면 -->
+          <div id="phase-game" class="hidden flex-1 flex flex-col">
+            <div id="plant-arena" class="flex-1 relative overflow-hidden bg-white"></div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 shrink-0">
+              <div class="flex items-center justify-between text-sm font-bold text-slate-700 mb-1.5">
+                <span>💡 발전량</span>
+                <span><span id="plant-energy" class="tabular-nums">0</span>%</span>
+              </div>
+              <div class="h-4 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
+                <div id="plant-meter" class="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-100" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ 마무리 (발전소 핵심 정리) -->
+          <div id="phase-outro" class="hidden flex-1 flex flex-col p-6 overflow-hidden">
+            <div class="text-center mb-3 shrink-0">
+              <div class="text-5xl mb-1 leading-none" id="outro-emoji">☀️</div>
+              <div class="text-sm font-extrabold text-emerald-700 font-title">✨ 발전소 핵심 정리</div>
+              <h3 class="text-2xl font-extrabold text-slate-900 font-title mt-0.5" id="outro-title"></h3>
+            </div>
+            <div class="flex gap-4 flex-1 overflow-hidden">
+              <div class="w-1/2 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-inner bg-slate-100 flex items-center justify-center">
+                <img id="outro-img" src="" alt="발전소 실물 사진" class="w-full h-full object-cover">
+              </div>
+              <div class="w-1/2 bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 overflow-y-auto">
+                <ul id="outro-facts" class="space-y-3 text-lg text-slate-800 font-cute leading-snug"></ul>
+              </div>
+            </div>
+            <button id="btn-outro-done" class="mt-3 w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white text-xl font-extrabold shadow-xl active:scale-95 transition font-title shrink-0">
+              ↩️ 지도로 돌아가기
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 결과 -->
+      <section id="screen-end" class="hidden absolute z-40 inset-0 bg-slate-900/70 backdrop-blur-sm items-center justify-center" style="display: none;">
+        <div class="bg-white rounded-[2rem] shadow-2xl p-7 anim-pop flex" style="width: 920px; height: 520px;">
+          <div class="w-[42%] h-full flex flex-col items-center justify-center text-center pr-6 border-r border-slate-200">
+            <div class="text-9xl mb-3 leading-none">🏆</div>
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-1 font-title">6개 발전소 가동 완료!</h2>
+            <p class="text-base text-slate-600 mb-5">정말 멋진 에너지 박사예요 🎉</p>
+            <div class="grid grid-cols-3 gap-2 text-3xl">
+              <div title="태양광">☀️</div><div title="풍력">💨</div><div title="지열">♨️</div>
+              <div title="수력">💧</div><div title="해양">🌊</div><div title="바이오">🌱</div>
+            </div>
+          </div>
+          <div class="w-[58%] h-full flex flex-col gap-4 pl-6">
+            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 flex-1">
+              <div class="text-2xl font-title text-violet-800 mb-4">💭 생각해 봐요</div>
+              <ul class="space-y-4 text-2xl text-slate-800 font-cute leading-snug">
+                <li class="flex gap-2"><span class="text-violet-600 font-bold">1.</span> 6가지 재생에너지의 공통점은 무엇일까요?</li>
+                <li class="flex gap-2"><span class="text-violet-600 font-bold">2.</span> 우리 동네에 어떤 발전소가 가장 잘 어울릴까요?</li>
+                <li class="flex gap-2"><span class="text-violet-600 font-bold">3.</span> 재생에너지의 좋은 점은 무엇일까요?</li>
+              </ul>
+            </div>
+            <div class="flex gap-3">
+              <button id="btn-retry-all" class="flex-1 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-lg border border-slate-200 transition active:scale-95 font-title">
+                🔁 다시 가동
+              </button>
+              <button id="btn-complete" class="flex-[1.6] py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-lg shadow-lg shadow-emerald-500/40 transition active:scale-95 font-title">
+                ✓ 미션 완료 · 지도로
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    /* ===== 스케일 ===== */
+    let __scale = 1;
+    function fitStage() {
+      const stage = document.getElementById('stage');
+      if (!stage) return;
+      __scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      stage.style.transform = `scale(${__scale})`;
+    }
+    window.addEventListener('resize', fitStage);
+    window.addEventListener('orientationchange', fitStage);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', fitStage);
+    fitStage();
+    window.addEventListener('load', fitStage);
+
+    /* ===== 발전소 데이터 ===== */
+    const PLANTS = [
+      {
+        id:'solar', emoji:'☀️', name:'태양광', headerDesc:'햇빛 알갱이로 전기를 만들어요',
+        color:'from-amber-400 to-orange-500',
+        x:18, y:30,
+        img: 'solar_real.png',
+        intro: {
+          desc: '햇빛 속에는 "햇빛 알갱이(광자)"가 있어요. 이 알갱이가 패널에 닿으면 패널 속 전자가 움직이며 전기가 만들어져요!',
+          howto: '날씨(맑음 / 구름 / 비)를 바꿔보세요. 햇빛 알갱이가 어떻게 달라지고 전구가 얼마나 밝아지는지 관찰해 봐요!'
+        },
+        outro: {
+          title: '실제 태양광 발전소',
+          facts: [
+            '☀️ 한국 새만금 태양광 단지는 축구장 280개 크기예요!',
+            '🏠 옥상에 패널 한 장만 깔아도 전기차 한 대분 전기가 나와요.',
+            '🌍 1시간 동안 지구에 닿는 햇빛만으로 1년치 인류 에너지를 만들 수 있어요.'
+          ]
+        }
+      },
+      {
+        id:'wind', emoji:'💨', name:'풍력', headerDesc:'바람으로 전기를 만들어요',
+        color:'from-sky-400 to-blue-500',
+        x:50, y:24,
+        img: 'wind_real.png',
+        intro: {
+          desc: '바람이 큰 날개(터빈)를 돌리면, 그 회전을 발전기가 전기로 바꿔줘요. 풍력 터빈 하나가 약 2,000가구의 1년치 전기를 만들 수 있어요.',
+          howto: '"후~ 불기" 버튼을 빠르게 눌러 바람을 일으켜 보세요!'
+        },
+        outro: {
+          title: '실제 풍력 발전 단지',
+          facts: [
+            '💨 대형 풍력 터빈 1대 = 약 2,000가구 1년치 전기를 만들어요.',
+            '🌊 한국 서해안에 큰 해상 풍력 단지가 늘고 있어요.',
+            '🦅 새들이 다치지 않도록 날개를 천천히 돌리는 기술도 있어요.'
+          ]
+        }
+      },
+      {
+        id:'geo', emoji:'♨️', name:'지열', headerDesc:'땅속 열로 전기를 만들어요',
+        color:'from-rose-400 to-red-600',
+        x:82, y:30,
+        img: 'geo_real.png',
+        intro: {
+          desc: '땅속은 깊이 내려갈수록 뜨거워져요. 깊이 100m마다 약 3℃씩 올라가요! 그 열로 물을 끓여 수증기를 만들고, 수증기로 발전기를 돌려요.',
+          howto: '곡괭이로 깊이깊이 파보세요! 흙 → 암석 → 뜨거운 층 → 마그마까지 도달하면 큰 보너스!'
+        },
+        outro: {
+          title: '실제 지열 발전소',
+          facts: [
+            '🌋 아이슬란드는 화산이 많아서 전기의 30%를 지열로 만들어요!',
+            '⛰️ 한국은 화산이 적어서 3km 이상 깊이 파야 해요.',
+            '♨️ 온천도 일종의 지열! 땅 깊은 곳의 뜨거운 물이 솟아오르는 거예요.'
+          ]
+        }
+      },
+      {
+        id:'hydro', emoji:'💧', name:'수력', headerDesc:'물의 힘으로 전기를 만들어요',
+        color:'from-blue-400 to-cyan-600',
+        x:18, y:72,
+        img: 'hydro_real.png',
+        intro: {
+          desc: '댐에 가둬둔 물이 떨어지는 힘으로 큰 터빈을 돌려요. 물의 위치 에너지가 운동 에너지로, 다시 전기 에너지로 바뀌는 거예요!',
+          howto: '수문을 위로 올려서 물을 흘려보내세요. 많이 열수록 물이 많이 떨어져요!'
+        },
+        outro: {
+          title: '실제 수력 댐',
+          facts: [
+            '🏔️ 한국에서 가장 큰 소양강댐은 1973년부터 전기를 만들고 있어요.',
+            '⚡ 댐 하나가 한 도시의 전기를 책임질 수도 있어요.',
+            '🐟 물고기가 댐을 지나가도록 "어도(魚道)"라는 길도 만들어요.'
+          ]
+        }
+      },
+      {
+        id:'bio', emoji:'🌱', name:'바이오', headerDesc:'식물에서 에너지를 얻어요',
+        color:'from-emerald-400 to-green-600',
+        x:50, y:78,
+        img: 'bio_real.png',
+        intro: {
+          desc: '옥수수·사탕수수 같은 식물이나 음식물 쓰레기에서도 에너지를 얻을 수 있어요. 식물을 발효시키면 에탄올이나 메탄가스가 만들어지고, 그걸 태워서 전기를 만들어요.',
+          howto: '다 자란 🌽을 수확해 발전소로 보내고, 발전소를 클릭해서 에너지로 바꿔주세요!'
+        },
+        outro: {
+          title: '실제 바이오 발전소',
+          facts: [
+            '🌽 옥수수·사탕수수·음식물 쓰레기 등 다양한 재료를 쓸 수 있어요.',
+            '🍚 우리나라 음식물 쓰레기로 매년 30만 가구분의 전기를 만들고 있어요.',
+            '🌳 식물은 다시 자라기 때문에 끝없이 에너지를 얻을 수 있어요!'
+          ]
+        }
+      },
+      {
+        id:'ocean', emoji:'🌊', name:'해양', headerDesc:'파도의 힘으로 전기를 만들어요',
+        color:'from-cyan-400 to-teal-600',
+        x:82, y:72,
+        img: 'ocean_real.png',
+        intro: {
+          desc: '파도가 위아래로 일렁이는 힘으로 부표 안의 발전기가 돌아가요. 또 바닷물이 들고 나는 차이(조수간만)로도 전기를 만들 수 있어요!',
+          howto: '파도가 가장 높이 올라왔을 때 "🌊 파도 잡기!" 버튼을 누르세요!'
+        },
+        outro: {
+          title: '실제 해양 발전',
+          facts: [
+            '🌊 시화호 조력발전소는 세계에서 가장 큰 조력발전소예요!',
+            '🌙 달의 인력 때문에 바닷물이 들고 나요. 하루 2번씩 만조와 간조가 있어요.',
+            '⏰ 바다는 24시간 끊임없이 움직이는 거대한 에너지원이에요.'
+          ]
+        }
+      },
+    ];
+
+    /* ===== 상태 ===== */
+    const KEY3 = 'lesson3-progress';
+    let completed = new Set();
+    try {
+      const data = JSON.parse(localStorage.getItem(KEY3) || '{}');
+      if (Array.isArray(data.completed)) completed = new Set(data.completed);
+    } catch {}
+    function saveCompleted() { localStorage.setItem(KEY3, JSON.stringify({ completed: [...completed] })); }
+
+    let currentPlant = null, energy = 0, loopId = null, cleanupFn = null;
+    const modal = document.getElementById('plant-modal');
+
+    /* ===== Hub 렌더 ===== */
+    function renderHub() {
+      const hub = document.getElementById('plants');
+      hub.innerHTML = '';
+      PLANTS.forEach(p => {
+        const done = completed.has(p.id);
+        const btn = document.createElement('button');
+        btn.className = 'absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group focus:outline-none';
+        btn.style.left = p.x + '%';
+        btn.style.top  = p.y + '%';
+        btn.innerHTML = `
+          <div class="relative">
+            ${done ? '' : '<span class="pulse-ring"></span>'}
+            <div class="relative w-24 h-24 rounded-full bg-gradient-to-br ${p.color} shadow-2xl flex items-center justify-center text-5xl border-4 border-white anim-float group-hover:scale-110 group-active:scale-95 transition">
+              <span class="relative z-10 drop-shadow">${p.emoji}</span>
+              ${done ? '<div class="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-emerald-500 border-[3px] border-white flex items-center justify-center text-white text-base font-extrabold shadow z-20">✓</div>' : ''}
+            </div>
+          </div>
+          <div class="mt-2 px-3 py-1 rounded-full bg-white shadow border border-slate-200 text-base font-extrabold text-slate-900 font-title">
+            ${p.name}
+          </div>
+        `;
+        btn.addEventListener('click', () => openPlant(p.id));
+        hub.appendChild(btn);
+      });
+      document.getElementById('progress-count').textContent = completed.size;
+    }
+
+    /* ===== 모달 단계 전환 ===== */
+    function showPhase(name) {
+      ['phase-intro','phase-game','phase-outro'].forEach(id => {
+        const el = document.getElementById(id);
+        if (id === 'phase-' + name) { el.classList.remove('hidden'); el.classList.add('flex'); }
+        else                         { el.classList.add('hidden'); el.classList.remove('flex'); }
+      });
+    }
+
+    function openPlant(id) {
+      const p = PLANTS.find(x => x.id === id);
+      currentPlant = id;
+      energy = 0;
+      // 헤더
+      document.getElementById('plant-emoji').textContent = p.emoji;
+      document.getElementById('plant-name').textContent  = p.name + ' 발전소';
+      document.getElementById('plant-desc').textContent  = p.headerDesc;
+      const header = document.getElementById('plant-header');
+      header.className = `px-6 py-4 text-white flex items-center justify-between bg-gradient-to-r ${p.color} shrink-0`;
+      // 도입
+      document.getElementById('intro-emoji').textContent = p.emoji;
+      document.getElementById('intro-title').textContent = p.name + ' 발전소';
+      document.getElementById('intro-desc').textContent  = p.intro.desc;
+      document.getElementById('intro-howto').textContent = p.intro.howto;
+      const startBtn = document.getElementById('btn-start-game');
+      startBtn.className = `w-full py-3.5 rounded-2xl text-white text-xl font-extrabold shadow-xl active:scale-95 transition bg-gradient-to-r ${p.color} font-title`;
+
+      showPhase('intro');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function startGame() {
+      energy = 0;
+      updateMeter();
+      const meter = document.getElementById('plant-meter');
+      const p = PLANTS.find(x => x.id === currentPlant);
+      meter.className = `h-full bg-gradient-to-r ${p.color} transition-all duration-100`;
+      showPhase('game');
+      MINIGAMES[currentPlant].init();
+    }
+
+    function showOutro() {
+      if (cleanupFn) { try { cleanupFn(); } catch {} cleanupFn = null; }
+      if (loopId) { clearInterval(loopId); loopId = null; }
+      const p = PLANTS.find(x => x.id === currentPlant);
+      completed.add(p.id);
+      saveCompleted();
+      document.getElementById('outro-title').textContent = p.outro.title;
+      document.getElementById('outro-emoji').textContent = p.emoji;
+      document.getElementById('outro-img').src = p.img;
+      const facts = document.getElementById('outro-facts');
+      facts.innerHTML = p.outro.facts.map(f => `<li class="flex gap-2"><span class="text-violet-500 font-bold">•</span> ${f}</li>`).join('');
+      showPhase('outro');
+    }
+
+    function closeModal() {
+      if (cleanupFn) { try { cleanupFn(); } catch {} cleanupFn = null; }
+      if (loopId) { clearInterval(loopId); loopId = null; }
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentPlant = null;
+      renderHub();
+      if (completed.size === 6) showEnd();
+    }
+
+    document.getElementById('plant-close').addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+    document.getElementById('btn-start-game').addEventListener('click', startGame);
+    document.getElementById('btn-outro-done').addEventListener('click', closeModal);
+
+    function updateMeter() {
+      document.getElementById('plant-energy').textContent = Math.round(energy);
+      document.getElementById('plant-meter').style.width  = Math.min(100, energy) + '%';
+    }
+    function addEnergy(d) {
+      if (energy >= 100) return;
+      energy = Math.min(100, energy + d);
+      updateMeter();
+      if (energy >= 100) {
+        setTimeout(showOutro, 600);
+      }
+    }
+
+    /* ===========================================
+       미니게임 6종
+       =========================================== */
+    const MINIGAMES = {
+
+      /* ☀️ 햇빛 전력소 — 정렬된 레이아웃 + 패널 각도 조작 + 박사님 카드 */
+      solar: {
+        init() {
+          const arena = document.getElementById('plant-arena');
+          arena.innerHTML = `
+            <style>
+              @keyframes sunBob { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-3px); } }
+              @keyframes photonFall {
+                0%   { transform: translate(0,0); opacity: 0; }
+                15%  { opacity: 1; }
+                85%  { opacity: 1; }
+                100% { transform: translate(var(--dx,200px), var(--dy,300px)); opacity: 0; }
+              }
+              @keyframes rainFall {
+                0% { transform: translate(0,0); opacity: 0; }
+                10% { opacity: 0.8; }
+                100% { transform: translate(var(--dx,5px), 360px); opacity: 0; }
+              }
+              .photon { position: absolute; width: 7px; height: 7px; border-radius: 9999px; background: radial-gradient(circle, #fffbeb, #fde047 60%, #fbbf24); box-shadow: 0 0 10px rgba(251,191,36,0.9); pointer-events: none; }
+              .raindrop { position: absolute; width: 2px; height: 10px; background: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(186,230,253,0.95)); border-radius: 1px; pointer-events: none; }
+              .weather-tab { color: rgba(255,255,255,0.7); transition: all 0.2s; }
+              .weather-tab.active { background: linear-gradient(to right, #fbbf24, #f59e0b); color: white; box-shadow: 0 2px 8px rgba(251,191,36,0.4); }
+              .weather-tab:not(.active):hover { color: white; background: rgba(255,255,255,0.1); }
+              .star-bg::before { content: ''; position: absolute; inset:0; background-image: radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1.5px), radial-gradient(circle, rgba(255,255,255,0.35) 1px, transparent 1.5px); background-size: 55px 75px, 90px 50px; background-position: 0 0, 27px 37px; }
+              @keyframes wireDash { to { stroke-dashoffset: -28; } }
+              .wire-active { stroke-dasharray: 6 8; animation: wireDash 0.6s linear infinite; }
+            </style>
+
+            <!-- 배경 (하늘 + 땅) -->
+            <div id="s-sky" class="absolute top-0 left-0 right-0 transition-all duration-700" style="height: 62%; background: linear-gradient(to bottom, #38bdf8, #7dd3fc);"></div>
+            <div class="absolute left-0 right-0 star-bg" style="top: 0; height: 62%; opacity: 0.3;"></div>
+            <div class="absolute left-0 right-0" style="top: 62%; bottom: 0; background: linear-gradient(to bottom, #166534 0%, #14532d 100%);"></div>
+            <div class="absolute left-0 right-0 star-bg" style="top: 62%; bottom: 0; opacity: 0.25;"></div>
+
+            <!-- 상단 바 -->
+            <div class="absolute top-2 left-2 right-2 z-20 flex items-center justify-between gap-2">
+              <div class="px-3 py-1.5 rounded-2xl bg-slate-900/85 text-white font-title text-base shadow border border-white/20 shrink-0">
+                ☀️ 햇빛 전력소
+              </div>
+              <div class="flex gap-1 px-1.5 py-1 rounded-2xl bg-slate-900/85 shadow border border-white/20">
+                <button data-w="sunny"  class="weather-tab active px-3 py-1 rounded-xl text-sm font-title select-none">🌞 맑음</button>
+                <button data-w="cloudy" class="weather-tab px-3 py-1 rounded-xl text-sm font-title select-none">☁️ 구름</button>
+                <button data-w="rainy"  class="weather-tab px-3 py-1 rounded-xl text-sm font-title select-none">🌧️ 비</button>
+              </div>
+              <div class="px-3 py-1 rounded-2xl bg-teal-700/95 text-white shadow border border-teal-500/40 text-right shrink-0" style="min-width: 110px;">
+                <div class="text-[9px] text-teal-200 font-title leading-none mt-0.5">전기 만드는 중</div>
+                <div class="text-lg font-extrabold tabular-nums leading-tight"><span id="s-watts">0</span><span class="text-xs ml-0.5">W</span></div>
+              </div>
+            </div>
+
+            <!-- 태양 -->
+            <div id="s-sun-wrap" class="absolute transition-opacity duration-500" style="top: 70px; left: 38%; transform: translateX(-50%);">
+              <div id="s-sun" class="w-20 h-20 rounded-full" style="background: radial-gradient(circle at 35% 30%, #fffbeb, #fde68a 55%, #fbbf24); box-shadow: 0 0 50px 15px rgba(254,243,199,0.75); animation: sunBob 3s ease-in-out infinite;"></div>
+            </div>
+
+            <!-- 구름들 (cloudy 모드) -->
+            <div id="s-clouds" class="absolute hidden" style="top: 20px; left: 25%; width: 50%; height: 100px;">
+              <span class="absolute" style="left: 0;   top: 30px; font-size: 60px;">☁️</span>
+              <span class="absolute" style="left: 30%; top: 0;   font-size: 52px;">☁️</span>
+              <span class="absolute" style="left: 55%; top: 25px; font-size: 70px;">☁️</span>
+              <span class="absolute" style="left: 85%; top: 40px; font-size: 50px;">☁️</span>
+            </div>
+
+            <!-- 비구름 (rainy 모드) -->
+            <div id="s-rain-cloud" class="absolute hidden" style="top: 10px; left: 25%; width: 55%; height: 110px;">
+              <span class="absolute" style="left: 5%;  top: 20px; font-size: 70px; filter: brightness(0.7);">☁️</span>
+              <span class="absolute" style="left: 45%; top: 0;    font-size: 80px; filter: brightness(0.7);">☁️</span>
+              <span class="absolute" style="left: 75%; top: 30px; font-size: 60px; filter: brightness(0.7);">☁️</span>
+            </div>
+
+            <!-- 빛 입자 / 빗방울 레이어 -->
+            <div id="s-particles" class="absolute inset-0 pointer-events-none"></div>
+
+            <!-- 전선 (패널 받침 → 전구 받침, 단순 직선) -->
+            <div class="absolute" style="left: 35%; right: 25%; bottom: 91px; height: 4px; background: #0f172a; border-radius: 2px; z-index: 1;"></div>
+            <div id="s-wire-flow" class="absolute" style="left: 35%; right: 25%; bottom: 91.5px; height: 3px; opacity: 0; z-index: 2;
+                 background-image: linear-gradient(90deg, transparent 0%, transparent 25%, #fbbf24 25%, #fbbf24 50%, transparent 50%, transparent 75%, #fbbf24 75%, #fbbf24 100%); background-size: 28px 100%;
+                 animation: wireSlide 0.5s linear infinite; border-radius: 2px;"></div>
+
+            <!-- 패널 시스템: 기둥+받침+회전된 패널 (왼쪽 35%) -->
+            <div class="absolute" style="left: 35%; bottom: 90px; z-index: 3;">
+              <!-- 회전된 패널 (기둥 위에 위치, 드래그 가능) -->
+              <div id="s-panel-tilt" style="position: absolute; left: 0; bottom: 60px; transform: translateX(-50%) rotate(33deg); transform-origin: center bottom; transition: transform 0.08s linear; cursor: grab; touch-action: none;">
+                <div id="s-panel-grid" class="grid grid-cols-8 gap-px p-1 bg-slate-900 rounded shadow-2xl" style="width: 200px;"></div>
+              </div>
+              <!-- 기둥 -->
+              <div style="position: absolute; left: -1.5px; bottom: 6px; transform: translateX(-50%); width: 4px; height: 55px; background: linear-gradient(to right, #64748b, #334155); border-radius: 1px;"></div>
+              <!-- 받침 (전선과 연결되는 노란 단자 포함) -->
+              <div style="position: absolute; left: 0; bottom: 0; transform: translateX(-50%); width: 64px; height: 7px; background: #334155; border-radius: 4px;"></div>
+              <div style="position: absolute; left: 0; bottom: -2px; transform: translateX(-50%); width: 14px; height: 6px; background: #fbbf24; border: 1px solid #92400e; border-radius: 2px;"></div>
+              <!-- 드래그 안내 -->
+              <div id="s-drag-hint" class="absolute font-cute font-bold text-xs text-white bg-amber-500 px-3 py-1 rounded-full shadow-lg whitespace-nowrap pointer-events-none transition-opacity duration-500"
+                   style="left: 0; bottom: 150px; transform: translateX(-50%);">
+                👆 패널을 좌·우로 드래그해서 햇빛에 맞춰주세요!
+              </div>
+            </div>
+
+            <!-- 전구 시스템 (오른쪽 75%) -->
+            <div class="absolute" style="left: 75%; bottom: 90px; z-index: 3;">
+              <!-- 전구 -->
+              <div style="position: absolute; left: 0; bottom: 55px; transform: translateX(-50%);">
+                <div id="s-bulb" class="text-5xl transition-all duration-300" style="filter: drop-shadow(0 0 12px rgba(254,243,199,0.35)); line-height: 1;">💡</div>
+              </div>
+              <!-- 전선이 전구 안으로 들어가는 모습: 기둥을 전선과 같은 검정으로 통일 -->
+              <div style="position: absolute; left: -1.5px; bottom: 6px; transform: translateX(-50%); width: 4px; height: 55px; background: #0f172a; border-radius: 1px;"></div>
+              <!-- 받침 (전선과 연결되는 노란 단자 포함) -->
+              <div style="position: absolute; left: 0; bottom: 0; transform: translateX(-50%); width: 54px; height: 7px; background: #334155; border-radius: 4px;"></div>
+              <div style="position: absolute; left: 0; bottom: -2px; transform: translateX(-50%); width: 14px; height: 6px; background: #fbbf24; border: 1px solid #92400e; border-radius: 2px;"></div>
+            </div>
+
+            <!-- 작동 설명 카드 (왼쪽 아래) -->
+            <div class="absolute bottom-2 left-2 p-3 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="width: 340px;">
+              <div class="flex items-center gap-2 mb-1.5">
+                <div class="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center text-lg shadow border-2 border-white/30">📋</div>
+                <div class="font-title text-base">작동 설명</div>
+              </div>
+              <p id="s-msg" class="text-sm font-cute leading-snug mb-2">[맑음] 햇빛이 가득! 패널을 햇빛 방향으로 드래그해서 돌려주세요.</p>
+              <div class="text-[10px] text-white/70 font-bold mb-1 font-title">에너지 흡수 효율 (수직 입사 = 100%)</div>
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-2 bg-white/15 rounded-full overflow-hidden">
+                  <div id="s-eff-bar" class="h-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-300" style="width: 100%;"></div>
+                </div>
+                <span id="s-eff-pct" class="text-xs font-extrabold text-amber-300 tabular-nums font-title w-10 text-right">100%</span>
+              </div>
+            </div>
+          `;
+
+          // 패널 셀 생성 (8x2 = 16)
+          const grid = document.getElementById('s-panel-grid');
+          grid.style.width = '180px';
+          let cellsHtml = '';
+          for (let i = 0; i < 16; i++) {
+            cellsHtml += `<div class="aspect-square" style="background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #1e40af 100%); border: 1px solid #1e3a8a;"></div>`;
+          }
+          grid.innerHTML = cellsHtml;
+
+          const weathers = {
+            sunny:  { particles: 6, watts: 280, msg: '[맑음] 햇빛이 가득! 패널을 햇빛 방향으로 드래그해서 돌려주세요.',           skyTop: '#38bdf8', skyBot: '#7dd3fc', sunOp: '1',    powerMul: 1.0 },
+            cloudy: { particles: 1, watts: 110, msg: '[구름] 구름이 햇빛을 가려요. 광자가 적게 와서 전기가 적게 만들어져요.',     skyTop: '#94a3b8', skyBot: '#cbd5e1', sunOp: '0.25', powerMul: 0.4 },
+            rainy:  { particles: 0, watts: 25,  msg: '[비] 비가 와서 햇빛이 거의 없어요. 전기를 거의 만들지 못해요.',           skyTop: '#475569', skyBot: '#64748b', sunOp: '0.05', powerMul: 0.1 },
+          };
+
+          // 태양(중앙 위, left:50%, top:100)에서 패널(left:35%, 패널 중심 y≈360)로의 방향
+          // dx ≈ (0.50-0.35) * 920 ≈ 138, dy ≈ 100-360 ≈ -260
+          // 단위벡터: (0.469, -0.883)
+          // 패널 법선이 이 방향과 같을 때 최적 → atan2(dx, -dy) = atan2(0.469, 0.883) ≈ 28°
+          // (실제 arena 크기에 따라 살짝 다를 수 있어서 측정값에 맞춰 33°로 설정)
+          const SUN_DIR_X = 0.469;
+          const SUN_DIR_Y = -0.883;
+          const OPTIMAL_ANGLE = Math.atan2(SUN_DIR_X, -SUN_DIR_Y) * 180 / Math.PI; // ≈ 28°
+
+          let weather = 'sunny';
+          let currentWatts = 0;
+          let panelAngle = OPTIMAL_ANGLE;
+          const sky = document.getElementById('s-sky');
+          const sunWrap = document.getElementById('s-sun-wrap');
+          const clouds = document.getElementById('s-clouds');
+          const rainCloud = document.getElementById('s-rain-cloud');
+          const particles = document.getElementById('s-particles');
+          const wattsEl = document.getElementById('s-watts');
+          const effBar = document.getElementById('s-eff-bar');
+          const effPct = document.getElementById('s-eff-pct');
+          const msgEl = document.getElementById('s-msg');
+          const bulb = document.getElementById('s-bulb');
+          const wireFlow = document.getElementById('s-wire-flow');
+          const panelTilt = document.getElementById('s-panel-tilt');
+          const dragHint  = document.getElementById('s-drag-hint');
+
+          // 실제 코사인 효율: 패널 법선과 태양 방향의 내적 (수직 입사 = 1.0, 평행 = 0)
+          function angleFactor() {
+            const rad = panelAngle * Math.PI / 180;
+            // CSS rotate(θ) 시 패널 법선 = (sin θ, -cos θ) (원래 (0,-1)에서 회전)
+            const nx = Math.sin(rad);
+            const ny = -Math.cos(rad);
+            const dot = nx * SUN_DIR_X + ny * SUN_DIR_Y;
+            // 음수면 0, 양수면 cos² 형태로 가파른 falloff (현실감 ↑)
+            if (dot <= 0) return 0;
+            return dot * dot;
+          }
+
+          function setPanelAngle(v) {
+            panelAngle = Math.max(-60, Math.min(80, v));
+            panelTilt.style.transform = `translateX(-50%) rotate(${panelAngle}deg)`;
+            refreshDisplay();
+          }
+
+          // 드래그 회전 (좌우 드래그)
+          let dragging = false, dragStartX = 0, dragStartAngle = 0;
+          panelTilt.addEventListener('pointerdown', e => {
+            dragging = true;
+            try { panelTilt.setPointerCapture(e.pointerId); } catch {}
+            dragStartX = e.clientX;
+            dragStartAngle = panelAngle;
+            panelTilt.style.cursor = 'grabbing';
+            panelTilt.style.transition = 'none';
+            if (dragHint) dragHint.style.opacity = '0';
+            e.preventDefault();
+          });
+          panelTilt.addEventListener('pointermove', e => {
+            if (!dragging) return;
+            const dx = (e.clientX - dragStartX) / __scale;
+            // 오른쪽으로 드래그 → 시계방향 회전 (왼쪽이 더 올라감)
+            setPanelAngle(dragStartAngle + dx / 3);
+          });
+          const endDrag = () => {
+            dragging = false;
+            panelTilt.style.cursor = 'grab';
+            panelTilt.style.transition = 'transform 0.08s linear';
+          };
+          panelTilt.addEventListener('pointerup', endDrag);
+          panelTilt.addEventListener('pointercancel', endDrag);
+          panelTilt.addEventListener('pointerleave', e => { if (dragging) endDrag(); });
+
+          // 드래그 안내 5초 뒤 자동 숨김
+          setTimeout(() => { if (dragHint) dragHint.style.opacity = '0'; }, 5000);
+
+          function setWeather(w) {
+            weather = w;
+            document.querySelectorAll('.weather-tab').forEach(b => b.classList.toggle('active', b.dataset.w === w));
+            const cfg = weathers[w];
+            sky.style.background = `linear-gradient(to bottom, ${cfg.skyTop}, ${cfg.skyBot})`;
+            sunWrap.style.opacity = cfg.sunOp;
+            clouds.classList.toggle('hidden', w !== 'cloudy');
+            rainCloud.classList.toggle('hidden', w !== 'rainy');
+            refreshDisplay();
+          }
+          function refreshDisplay() {
+            const cfg = weathers[weather];
+            const factor = angleFactor() * cfg.powerMul;
+            const effPercent = Math.round(factor * 100);
+            effBar.style.width = effPercent + '%';
+            effPct.textContent = effPercent + '%';
+            // 메시지: 날씨 + 각도 힌트
+            const adiff = Math.abs(panelAngle - OPTIMAL_ANGLE);
+            let extra;
+            if (adiff < 5)       extra = ' ✨ 빛이 패널에 수직으로! 최대 발전!';
+            else if (adiff < 15) extra = ' 거의 다 왔어요!';
+            else if (adiff < 30) extra = ` 더 ${panelAngle < OPTIMAL_ANGLE ? '오른쪽' : '왼쪽'}으로 드래그해 보세요!`;
+            else                  extra = ' ⚠ 패널이 햇빛과 어긋났어요!';
+            msgEl.textContent = cfg.msg + extra;
+          }
+          document.querySelectorAll('.weather-tab').forEach(b => b.addEventListener('click', () => setWeather(b.dataset.w)));
+
+          // 입자 / 빗방울 생성 — 광자는 태양에서 패널 쪽으로 명확하게 떨어짐
+          function spawn() {
+            const cfg = weathers[weather];
+            const arenaRect = arena.getBoundingClientRect();
+            const arenaW = arenaRect.width / __scale;
+            const arenaH = arenaRect.height / __scale;
+            // 태양 위치: left:50%, top:90 부근
+            const sunX = arenaW * 0.50;
+            const sunY = 120;
+            // 패널 중심 좌표 (left:35%, 패널은 기둥 위, 회전 중심 = bottom:150)
+            const panelX = arenaW * 0.35;
+            const panelY = arenaH - 175;
+
+            if (weather === 'rainy') {
+              // 빗방울
+              for (let i = 0; i < 6; i++) {
+                const d = document.createElement('div');
+                d.className = 'raindrop';
+                d.style.left = (15 + Math.random() * 75) + '%';
+                d.style.top = '90px';
+                d.style.setProperty('--dx', (Math.random() * 6 - 3) + 'px');
+                d.style.animation = `rainFall ${0.7 + Math.random() * 0.5}s linear forwards`;
+                particles.appendChild(d);
+                setTimeout(() => d.remove(), 1200);
+              }
+            }
+            // 햇빛 알갱이: 모두 태양 위치에서 출발 → 패널 쪽으로 직선 이동 (명확히 보임)
+            for (let i = 0; i < cfg.particles; i++) {
+              if (Math.random() > 0.7) continue;
+              const p = document.createElement('div');
+              p.className = 'photon';
+              const startPx = sunX + (Math.random() * 24 - 12);
+              const startPy = sunY + (Math.random() * 20 - 10);
+              p.style.left = startPx + 'px';
+              p.style.top = startPy + 'px';
+              const dx = (panelX + (Math.random() * 140 - 70)) - startPx;
+              const dy = (panelY + (Math.random() * 30 - 15)) - startPy;
+              p.style.setProperty('--dx', dx + 'px');
+              p.style.setProperty('--dy', dy + 'px');
+              p.style.animation = `photonFall ${1.0 + Math.random() * 0.3}s linear forwards`;
+              particles.appendChild(p);
+              // 광자가 패널에 도달하면: 패널 셀 한 군데 반짝 (효율에 따라)
+              setTimeout(() => {
+                const cells = grid.children;
+                if (cells.length > 0 && angleFactor() > 0.3) {
+                  const idx = Math.floor(Math.random() * cells.length);
+                  const c = cells[idx];
+                  c.style.boxShadow = 'inset 0 0 12px 3px rgba(254,243,199,0.95)';
+                  setTimeout(() => { c.style.boxShadow = ''; }, 300);
+                }
+                p.remove();
+              }, 1050);
+            }
+          }
+
+          setPanelAngle(OPTIMAL_ANGLE);
+          setWeather('sunny');
+
+          loopId = setInterval(() => {
+            const cfg = weathers[weather];
+            const factor = angleFactor() * cfg.powerMul;
+            // Watts (실제 코사인 효율 + 날씨)
+            const target = (cfg.watts * factor) + (Math.random() * 16 - 8);
+            currentWatts += (target - currentWatts) * 0.18;
+            wattsEl.textContent = Math.max(0, currentWatts).toFixed(1);
+            // 전구 밝기 (전류에 비례)
+            const glow = 4 + (currentWatts / 280) * 55;
+            bulb.style.filter = `drop-shadow(0 0 ${glow}px rgba(254,243,199,${Math.min(0.95, 0.2 + currentWatts/350)}))`;
+            // 전선 전류 흐름
+            wireFlow.style.opacity = currentWatts > 30 ? '0.95' : '0';
+            // 광자 + 빗방울
+            spawn();
+            // 에너지 누적 (느리게 — 학생이 조정해볼 시간 충분히)
+            addEnergy(factor * 1.3);
+          }, 100);
+
+          cleanupFn = () => clearInterval(loopId);
+        }
+      },
+
+      /* 💨 풍력 — 바람선 + 다중 터빈 + 속도계 */
+      wind: {
+        init() {
+          const arena = document.getElementById('plant-arena');
+          arena.innerHTML = `
+            <style>
+              @keyframes windFlow { 0%{ transform: translateX(-120px); opacity:0;} 10%{opacity:0.8;} 90%{opacity:0.8;} 100%{ transform: translateX(900px); opacity: 0;} }
+              .wind-line { position: absolute; height: 3px; border-radius: 2px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.9), transparent); pointer-events: none; }
+            </style>
+            <div class="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-300"></div>
+            <!-- 구름 -->
+            <div class="absolute top-3 left-12 text-4xl opacity-80 anim-drift">☁️</div>
+            <div class="absolute top-6 right-1/3 text-3xl opacity-70 anim-drift" style="animation-delay: -10s;">☁️</div>
+            <!-- 산 (배경) -->
+            <svg class="absolute left-0 right-0" viewBox="0 0 920 120" preserveAspectRatio="none" style="bottom: 60px; width: 100%; height: 90px;">
+              <path fill="#94a3b8" fill-opacity="0.65" d="M0,90 L120,40 L210,75 L320,25 L420,70 L520,35 L620,80 L740,30 L860,65 L920,40 L920,120 L0,120 Z"/>
+              <path fill="#64748b" fill-opacity="0.55" d="M0,100 L80,60 L180,85 L280,55 L400,90 L500,60 L600,95 L720,55 L840,85 L920,65 L920,120 L0,120 Z"/>
+            </svg>
+            <!-- 잔디 -->
+            <svg class="absolute bottom-0 left-0 w-full" viewBox="0 0 920 100" preserveAspectRatio="none" style="height: 80px;">
+              <path fill="#65a30d" d="M0,30 C220,10 460,50 720,30 C800,20 850,40 920,30 L920,100 L0,100 Z"></path>
+              <path fill="#86efac" d="M0,55 C220,35 460,75 720,55 C800,45 850,65 920,55 L920,100 L0,100 Z"></path>
+            </svg>
+
+            <!-- 바람 흐름선 (계속 흘러감) -->
+            <div id="w-currents" class="absolute inset-0 pointer-events-none"></div>
+
+            <!-- 중앙 큰 터빈 (실제 풍력 발전기 비례) -->
+            <div class="absolute" style="left: 50%; bottom: 80px; transform: translateX(-50%);">
+              <!-- 타워: 위로 갈수록 좁아지는 사다리꼴 -->
+              <svg width="40" height="220" viewBox="0 0 40 220" style="display:block;">
+                <polygon points="14,0 26,0 32,220 8,220" fill="url(#wtower)" stroke="#475569" stroke-width="1"/>
+                <defs>
+                  <linearGradient id="wtower" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#f1f5f9"/>
+                    <stop offset="0.5" stop-color="#e2e8f0"/>
+                    <stop offset="1" stop-color="#94a3b8"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <!-- 너셀(nacelle) + 블레이드 -->
+              <svg id="w-blades" width="260" height="260" viewBox="0 0 260 260" class="absolute" style="left: 50%; top: -132px; transform: translateX(-50%) rotate(0deg); transition: transform 0.1s linear;">
+                <g transform="translate(130,130)">
+                  <!-- 너셀 (모터 박스) -->
+                  <rect x="-34" y="-12" width="50" height="24" rx="4" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+                  <!-- 블레이드 3장 (뿌리는 두껍고 끝은 가늘게 — 실제 풍력 블레이드 모양) -->
+                  <g>
+                    <path d="M0,-10 Q-3,-50 -2,-85 Q-1,-100 0,-105 Q1,-100 2,-85 Q3,-50 0,-10 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="2"/>
+                  </g>
+                  <g transform="rotate(120)">
+                    <path d="M0,-10 Q-3,-50 -2,-85 Q-1,-100 0,-105 Q1,-100 2,-85 Q3,-50 0,-10 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="2"/>
+                  </g>
+                  <g transform="rotate(240)">
+                    <path d="M0,-10 Q-3,-50 -2,-85 Q-1,-100 0,-105 Q1,-100 2,-85 Q3,-50 0,-10 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="2"/>
+                  </g>
+                  <!-- 허브 -->
+                  <circle r="14" fill="#64748b" stroke="#0f172a" stroke-width="2"/>
+                  <circle r="6" fill="#1e293b"/>
+                </g>
+              </svg>
+            </div>
+
+            <!-- 작은 터빈 1 (왼쪽) -->
+            <div class="absolute" style="left: 11%; bottom: 70px;">
+              <svg width="20" height="120" viewBox="0 0 20 120" style="display:block;">
+                <polygon points="7,0 13,0 16,120 4,120" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+              </svg>
+              <svg id="w-blades-2" width="110" height="110" viewBox="0 0 110 110" class="absolute" style="left: 50%; top: -55px; transform: translateX(-50%) rotate(0deg); transition: transform 0.1s linear;">
+                <g transform="translate(55,55)">
+                  <rect x="-14" y="-5" width="22" height="10" rx="2" fill="#cbd5e1" stroke="#475569" stroke-width="1.5"/>
+                  <path d="M0,-5 Q-1.5,-22 -1,-40 Q-0.5,-46 0,-48 Q0.5,-46 1,-40 Q1.5,-22 0,-5 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"/>
+                  <path d="M0,-5 Q-1.5,-22 -1,-40 Q-0.5,-46 0,-48 Q0.5,-46 1,-40 Q1.5,-22 0,-5 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5" transform="rotate(120)"/>
+                  <path d="M0,-5 Q-1.5,-22 -1,-40 Q-0.5,-46 0,-48 Q0.5,-46 1,-40 Q1.5,-22 0,-5 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5" transform="rotate(240)"/>
+                  <circle r="6" fill="#64748b" stroke="#0f172a" stroke-width="1.5"/>
+                </g>
+              </svg>
+            </div>
+            <!-- 작은 터빈 2 (오른쪽) -->
+            <div class="absolute" style="right: 9%; bottom: 60px;">
+              <svg width="18" height="100" viewBox="0 0 18 100" style="display:block;">
+                <polygon points="6,0 12,0 15,100 3,100" fill="#e2e8f0" stroke="#64748b" stroke-width="1"/>
+              </svg>
+              <svg id="w-blades-3" width="90" height="90" viewBox="0 0 90 90" class="absolute" style="left: 50%; top: -45px; transform: translateX(-50%) rotate(0deg); transition: transform 0.1s linear;">
+                <g transform="translate(45,45)">
+                  <rect x="-12" y="-4" width="18" height="8" rx="2" fill="#cbd5e1" stroke="#475569" stroke-width="1.5"/>
+                  <path d="M0,-4 Q-1.2,-18 -0.8,-32 Q-0.4,-38 0,-40 Q0.4,-38 0.8,-32 Q1.2,-18 0,-4 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"/>
+                  <path d="M0,-4 Q-1.2,-18 -0.8,-32 Q-0.4,-38 0,-40 Q0.4,-38 0.8,-32 Q1.2,-18 0,-4 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5" transform="rotate(120)"/>
+                  <path d="M0,-4 Q-1.2,-18 -0.8,-32 Q-0.4,-38 0,-40 Q0.4,-38 0.8,-32 Q1.2,-18 0,-4 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5" transform="rotate(240)"/>
+                  <circle r="5" fill="#64748b" stroke="#0f172a" stroke-width="1.5"/>
+                </g>
+              </svg>
+            </div>
+
+            <!-- 풍속계 -->
+            <div class="absolute top-3 right-3 px-3 py-1.5 rounded-2xl bg-white/95 shadow border border-white">
+              <div class="text-[10px] text-slate-500 font-bold font-title">💨 바람 세기</div>
+              <div class="flex items-center gap-2">
+                <div class="w-24 h-2 rounded-full bg-slate-200 overflow-hidden"><div id="w-speed-bar" class="h-full bg-gradient-to-r from-sky-400 to-blue-600 transition-all duration-150" style="width: 0%;"></div></div>
+                <span id="w-speed-pct" class="text-xs font-extrabold text-sky-700 tabular-nums">0%</span>
+              </div>
+            </div>
+
+            <!-- 작동 설명 카드 -->
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="bottom: 95px; left: 6px; width: 300px;">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
+                <div class="font-title text-sm">작동 설명</div>
+              </div>
+              <p id="w-msg" class="text-sm font-cute leading-snug">[정지] 후~ 불기 버튼을 눌러 바람을 일으켜요! 한 번 분 뒤에는 잠시 숨을 들이쉬어요.</p>
+            </div>
+
+            <!-- 가동 버튼 -->
+            <div class="absolute bottom-3 left-6 right-6 text-center">
+              <button id="w-btn" class="relative w-full py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white text-2xl font-extrabold shadow-xl shadow-sky-500/40 active:scale-95 transition select-none font-title overflow-hidden">
+                <span id="w-btn-label">💨 후 — 불기!</span>
+                <div id="w-btn-bar" class="absolute left-0 bottom-0 h-1.5 bg-white/85 rounded-full" style="width: 100%;"></div>
+              </button>
+            </div>
+          `;
+          const blades = document.getElementById('w-blades');
+          const blades2 = document.getElementById('w-blades-2');
+          const blades3 = document.getElementById('w-blades-3');
+          const btn = document.getElementById('w-btn');
+          const currents = document.getElementById('w-currents');
+          const speedBar = document.getElementById('w-speed-bar');
+          const speedPct = document.getElementById('w-speed-pct');
+          let speed = 0, angle = 0, angle2 = 0, angle3 = 0;
+          // 숨쉬기 쿨다운
+          const BREATH_MS = 800;
+          let lastBlow = 0;
+          const btnBar = document.getElementById('w-btn-bar');
+          const btnLabel = document.getElementById('w-btn-label');
+          btn.addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastBlow < BREATH_MS) return; // 아직 들이쉬는 중
+            lastBlow = now;
+            speed = Math.min(150, speed + 28);
+            // 바람 흐름선 생성
+            for (let i=0; i<4; i++) {
+              const line = document.createElement('div');
+              line.className = 'wind-line';
+              line.style.top = (80 + Math.random() * 240) + 'px';
+              line.style.left = '0';
+              line.style.width = (60 + Math.random() * 80) + 'px';
+              line.style.animation = `windFlow ${1 + Math.random() * 0.5}s linear forwards`;
+              line.style.animationDelay = (i * 0.08) + 's';
+              currents.appendChild(line);
+              setTimeout(() => line.remove(), 2000);
+            }
+            // 버튼 들이쉬기 표시
+            btnLabel.textContent = '🫁 들이쉬는 중...';
+            btn.style.background = 'rgba(100,116,139,0.85)';
+            btn.style.cursor = 'wait';
+            btnBar.style.transition = 'none';
+            btnBar.style.width = '0%';
+            requestAnimationFrame(() => {
+              btnBar.style.transition = `width ${BREATH_MS}ms linear`;
+              btnBar.style.width = '100%';
+            });
+            setTimeout(() => {
+              btnLabel.textContent = '💨 후 — 불기!';
+              btn.style.background = '';
+              btn.style.cursor = '';
+            }, BREATH_MS);
+          });
+          const msg = document.getElementById('w-msg');
+          let lastMsgKey = '';
+          loopId = setInterval(() => {
+            speed = Math.max(0, speed - 2);
+            angle  = (angle  + speed * 0.5) % 360;
+            angle2 = (angle2 + speed * 0.7) % 360;
+            angle3 = (angle3 + speed * 0.9) % 360;
+            blades.style.transform  = `translateX(-50%) rotate(${angle}deg)`;
+            blades2.style.transform = `translateX(-50%) rotate(${angle2}deg)`;
+            blades3.style.transform = `translateX(-50%) rotate(${angle3}deg)`;
+            const pct = Math.min(100, Math.round(speed / 1.5));
+            speedBar.style.width = pct + '%';
+            speedPct.textContent = pct + '%';
+            if (speed > 8) addEnergy(speed * 0.03);
+            // 박사님 메시지
+            const key = speed < 10 ? 'stop' : speed < 50 ? 'weak' : speed < 100 ? 'good' : 'strong';
+            if (key !== lastMsgKey) {
+              const msgs = {
+                stop:   '[정지] 터빈이 멈췄어요. 후~ 불기 버튼을 더 빠르게 눌러주세요!',
+                weak:   '[약풍] 살랑살랑 부는 바람이에요. 발전량이 적어요.',
+                good:   '[순풍] 바람이 잘 불어요! 터빈이 신나게 돌아가요.',
+                strong: '[강풍] 와우! 바람이 강해서 최대 발전량이에요!'
+              };
+              msg.textContent = msgs[key];
+              lastMsgKey = key;
+            }
+          }, 100);
+          cleanupFn = () => clearInterval(loopId);
+        }
+      },
+
+      /* ♨️ 지열 — 곡괭이가 실제로 땅을 파며 내려감 + 파편 + 증기 */
+      geo: {
+        init() {
+          const arena = document.getElementById('plant-arena');
+          arena.innerHTML = `
+            <style>
+              @keyframes drillBob { 0%,100%{ transform: translateX(-50%) rotate(-15deg); } 50%{ transform: translateX(-50%) rotate(15deg); } }
+              @keyframes chunkFly { 0%{ transform: translate(0,0) rotate(0); opacity: 1;} 100%{ transform: translate(var(--cx,0), var(--cy,-30px)) rotate(360deg); opacity: 0;} }
+              .drill-shake { animation: drillBob 0.12s ease-in-out 2; }
+              .chunk { position: absolute; pointer-events: none; font-size: 14px; animation: chunkFly 0.5s ease-out forwards; }
+              @keyframes glowPulse { 0%,100%{ box-shadow: inset 0 0 0 rgba(255,0,0,0); } 50%{ box-shadow: inset 0 -40px 60px rgba(220,38,38,0.6); } }
+              .glow-hot { animation: glowPulse 1.5s ease-in-out infinite; }
+            </style>
+
+            <!-- 지층 (단면) -->
+            <div class="absolute inset-0 flex flex-col">
+              <div class="h-[18%]" style="background: linear-gradient(to bottom, #7dd3fc, #fde68a);"></div>
+              <div class="h-[20%]" style="background: linear-gradient(to bottom, #b45309 0%, #92400e 100%); background-image: linear-gradient(to bottom, #b45309 0%, #92400e 100%), radial-gradient(circle at 20% 30%, rgba(0,0,0,0.2) 2px, transparent 3px), radial-gradient(circle at 70% 60%, rgba(0,0,0,0.2) 3px, transparent 4px);"></div>
+              <div class="h-[22%]" style="background: linear-gradient(to bottom, #78716c, #57534e);"></div>
+              <div class="h-[22%]" style="background: linear-gradient(to bottom, #ea580c, #c2410c);"></div>
+              <div id="g-magma" class="flex-1" style="background: linear-gradient(to bottom, #dc2626, #7f1d1d);"></div>
+            </div>
+
+            <!-- 라벨 -->
+            <div class="absolute left-3 top-[8px] text-xs font-bold text-sky-700 bg-white/85 px-2 py-0.5 rounded font-title">🌳 지표</div>
+            <div class="absolute right-3 top-[19%] text-xs font-bold text-amber-900 bg-white/90 px-2 py-0.5 rounded font-title">🟫 흙 (0~50m)</div>
+            <div class="absolute right-3 top-[39%] text-xs font-bold text-stone-700 bg-white/90 px-2 py-0.5 rounded font-title">🪨 암석 (50~500m)</div>
+            <div class="absolute right-3 top-[61%] text-xs font-bold text-orange-900 bg-white/95 px-2 py-0.5 rounded font-title">🔥 뜨거운 층 (1km+)</div>
+            <div class="absolute right-3 top-[83%] text-xs font-bold text-red-900 bg-white/95 px-2 py-0.5 rounded font-title">🌋 마그마층 (3km+)</div>
+
+            <!-- 굴착 통로 (드릴이 파낸 흔적) -->
+            <div id="g-tunnel" class="absolute" style="left: 50%; top: 18%; width: 30px; height: 0; transform: translateX(-50%); background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.8)); border-left: 2px solid #1c1917; border-right: 2px solid #1c1917; transition: height 0.2s ease-out;"></div>
+
+            <!-- 드릴 -->
+            <div id="g-drill" class="absolute text-6xl transition-all duration-200" style="top: 18%; left: 50%; transform: translateX(-50%) rotate(0deg);">⛏️</div>
+            <!-- 파편 효과 레이어 -->
+            <div id="g-chunks" class="absolute pointer-events-none" style="left: 50%; transform: translateX(-50%); width: 0; height: 0;"></div>
+
+            <!-- 깊이 게이지 (왼쪽) -->
+            <div class="absolute left-2 top-3 w-5 bg-black/30 rounded-full overflow-hidden border border-white/20" style="bottom: 200px;">
+              <div id="g-depth-fill" class="w-full bg-gradient-to-b from-amber-300 via-orange-500 to-red-600 transition-all duration-200" style="height: 0%;"></div>
+            </div>
+            <div class="absolute left-9 top-3 text-xs font-bold text-white bg-slate-900/80 px-2 py-0.5 rounded font-title">📏 깊이</div>
+            <div id="g-depth-num" class="absolute left-2 text-xs font-extrabold text-white bg-slate-900/80 px-1.5 py-0.5 rounded tabular-nums" style="bottom: 178px;">0m</div>
+
+            <!-- 온도 게이지 (오른쪽) -->
+            <div class="absolute right-2 top-3 w-5 bg-black/30 rounded-full overflow-hidden border border-white/20" style="bottom: 200px;">
+              <div id="g-temp-fill" class="w-full bg-gradient-to-t from-sky-200 via-yellow-400 via-orange-500 to-red-700 transition-all duration-200" style="height: 0%; position: absolute; bottom: 0; left: 0; right: 0;"></div>
+            </div>
+            <div class="absolute right-9 top-3 text-xs font-bold text-white bg-red-900/80 px-2 py-0.5 rounded font-title">🌡️ 온도</div>
+            <div id="g-temp-num" class="absolute right-2 text-xs font-extrabold text-white bg-red-900/80 px-1.5 py-0.5 rounded tabular-nums" style="bottom: 178px;">15°C</div>
+
+            <!-- 증기 (뜨거운 층 도달 시) -->
+            <div id="g-steam-wrap" class="absolute pointer-events-none" style="left: 50%; width: 60px; height: 60px; transform: translateX(-50%); top: 0;"></div>
+
+            <!-- 박사님 카드 (왼쪽 아래, 버튼 위) -->
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="bottom: 88px; left: 6px; width: 320px;">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
+                <div class="font-title text-sm">작동 설명</div>
+              </div>
+              <p id="g-msg" class="text-sm font-cute leading-snug">⛏️ 곡괭이로 땅을 파보세요!</p>
+            </div>
+
+            <!-- 가동 버튼 -->
+            <div class="absolute bottom-3 left-6 right-6 text-center">
+              <button id="g-btn" class="w-full py-4 rounded-2xl bg-red-500 hover:bg-red-400 text-white text-xl font-extrabold shadow-xl shadow-red-500/40 active:scale-95 transition font-title">
+                ⛏️ 곡괭이로 파기!
+              </button>
+            </div>
+          `;
+          const drill   = document.getElementById('g-drill');
+          const tunnel  = document.getElementById('g-tunnel');
+          const fill    = document.getElementById('g-depth-fill');
+          const depthNum= document.getElementById('g-depth-num');
+          const tempFill= document.getElementById('g-temp-fill');
+          const tempNum = document.getElementById('g-temp-num');
+          const btn     = document.getElementById('g-btn');
+          const msg     = document.getElementById('g-msg');
+          const chunks  = document.getElementById('g-chunks');
+          const steamWrap = document.getElementById('g-steam-wrap');
+          const magma   = document.getElementById('g-magma');
+          let depth = 0;
+          let lastMsgAt = -1;
+          const messages = [
+            { at: 0,   text: '⛏️ 땅을 파보세요! 부드러운 흙층은 쉽게 파져요.' },
+            { at: 18,  text: '🪨 단단한 암석층이에요. 한 번에 조금씩만 파져요... 끈기있게!' },
+            { at: 38,  text: '🪨 더 단단한 암석층! 거의 다 왔어요.' },
+            { at: 60,  text: '🔥 뜨거운 층 도착! 땅이 따뜻해지고 발전량이 늘어요!' },
+            { at: 85,  text: '🌋 마그마층! 1000℃ 넘는 열! 최대 발전량!' },
+          ];
+
+          function calcTemp(d) {
+            if (d >= 85) return 1000 + (d - 85) * 30;        // 1000-1450°C
+            if (d >= 60) return 300 + (d - 60) * 28;          // 300-1000°C
+            if (d >= 38) return 50 + (d - 38) * 11;           // 50-300°C
+            if (d >= 18) return 20 + (d - 18) * 1.5;          // 20-50°C
+            return 15 + d * 0.3;                              // 15-20°C
+          }
+
+          btn.addEventListener('click', () => {
+            // 지층별 굴착 속도 (★ 암석은 느리게)
+            let increment;
+            if (depth < 18) increment = 4.5;        // 흙층 - 빠름
+            else if (depth < 38) increment = 1.3;   // 단단한 암석층 - 느림
+            else if (depth < 60) increment = 1.8;   // 더 단단한 암석 - 조금 느림
+            else if (depth < 85) increment = 3.5;   // 뜨거운 층 - 부드러워짐
+            else increment = 5.5;                   // 마그마층 - 빠름
+
+            depth = Math.min(100, depth + increment);
+            // 드릴 위치
+            const drillTop = 18 + depth * 0.74;
+            drill.style.top = drillTop + '%';
+            tunnel.style.height = (depth * 0.74) + '%';
+            // 드릴 진동
+            drill.classList.add('drill-shake');
+            setTimeout(() => drill.classList.remove('drill-shake'), 250);
+            // 파편 (양: 암석층일수록 많이 튐)
+            const chunkCount = depth < 18 ? 2 : depth < 60 ? 4 : 3;
+            const chunkChars = depth < 18 ? ['·','.','◦'] : depth < 60 ? ['▪','◾','•','▫'] : ['🔥','✦','·'];
+            for (let i = 0; i < chunkCount; i++) {
+              const c = document.createElement('span');
+              c.className = 'chunk';
+              c.style.color = depth < 18 ? '#92400e' : depth < 60 ? '#475569' : '#dc2626';
+              c.style.left = (Math.random() * 30 - 15) + 'px';
+              c.style.top = (drillTop - 5) + '%';
+              c.style.setProperty('--cx', (Math.random() * 80 - 40) + 'px');
+              c.style.setProperty('--cy', -(20 + Math.random() * 30) + 'px');
+              c.textContent = chunkChars[Math.floor(Math.random() * chunkChars.length)];
+              chunks.appendChild(c);
+              setTimeout(() => c.remove(), 600);
+            }
+            // 깊이 게이지
+            fill.style.height = depth + '%';
+            depthNum.textContent = Math.round(depth * 30) + 'm';
+            // 온도 게이지 + 숫자
+            const temp = calcTemp(depth);
+            tempFill.style.height = Math.min(100, (temp / 1500) * 100) + '%';
+            tempNum.textContent = Math.round(temp) + '°C';
+            // 드릴 빨갛게 달구기 (깊을수록 더 빨갛게)
+            const heatLvl = Math.min(1, depth / 100);
+            drill.style.filter = `drop-shadow(0 0 ${4 + heatLvl * 25}px rgba(255, ${230 - heatLvl * 180}, ${50 - heatLvl * 50}, ${0.5 + heatLvl * 0.45}))`;
+            // 발전량 (깊이 보너스)
+            let bonus = 1;
+            if (depth >= 85) bonus = 5;
+            else if (depth >= 60) bonus = 3;
+            else if (depth >= 38) bonus = 1.5;
+            addEnergy(1.5 * bonus);
+            // 박사님 메시지
+            const msgItem = messages.slice().reverse().find(m => depth >= m.at);
+            if (msgItem && msgItem.at !== lastMsgAt) {
+              msg.textContent = msgItem.text;
+              lastMsgAt = msgItem.at;
+            }
+            // 마그마층 도달 시 글로우
+            if (depth >= 85) magma.classList.add('glow-hot');
+            // 뜨거운 층 → 증기 (깊을수록 더 많이)
+            if (depth >= 60) {
+              steamWrap.style.top = (drillTop - 10) + '%';
+              const steamCount = depth >= 85 ? 3 : 1;
+              for (let i = 0; i < steamCount; i++) {
+                if (Math.random() < 0.7) {
+                  const s = document.createElement('span');
+                  s.className = 'steam';
+                  s.style.left = (Math.random() * 50 - 25) + 'px';
+                  s.style.bottom = '0';
+                  steamWrap.appendChild(s);
+                  setTimeout(() => s.remove(), 2000);
+                }
+              }
+            }
+          });
+          cleanupFn = () => {};
+        }
+      },
+
+      /* 💧 수력 — 수문이 위로 올라가며 호수 물이 쏟아짐 */
+      hydro: {
+        init() {
+          const arena = document.getElementById('plant-arena');
+          arena.innerHTML = `
+            <!-- 하늘 -->
+            <div class="absolute inset-0 bg-gradient-to-b from-sky-300 to-sky-200"></div>
+
+            <!-- 호수 (위쪽, 항상 물로 가득) -->
+            <div class="absolute top-0 left-0 right-0 water-rush" style="height: 26%;"></div>
+            <div class="absolute left-0 right-0 h-1 bg-white/60" style="top: 24%;"></div>
+            <div class="absolute font-bold text-white text-xs font-title bg-blue-900/50 px-2 py-0.5 rounded" style="top: 6px; left: 12px;">💧 호수 (가둬둔 물)</div>
+
+            <!-- 댐 양옆 벽 (콘크리트) -->
+            <div class="absolute" style="left: 0; width: 32%; top: 26%; bottom: 30%; background: linear-gradient(to bottom, #cbd5e1, #64748b); border-right: 4px solid #334155;"></div>
+            <div class="absolute" style="right: 0; width: 32%; top: 26%; bottom: 30%; background: linear-gradient(to bottom, #cbd5e1, #64748b); border-left: 4px solid #334155;"></div>
+
+            <!-- 댐 꼭대기 (수문 권양기 받침대) -->
+            <div class="absolute" style="left: 28%; right: 28%; top: 22%; height: 28px; background: #334155; border-radius: 6px 6px 0 0;"></div>
+            <!-- 권양기(도르래) -->
+            <div class="absolute font-title text-white text-sm font-bold" style="left: 50%; top: 22%; transform: translate(-50%, -130%); background: #334155; padding: 2px 10px; border-radius: 8px;">⚙️ 권양기</div>
+            <!-- 권양기 케이블 -->
+            <div id="h-cable" class="absolute" style="left: 50%; top: calc(22% + 28px); width: 4px; background: repeating-linear-gradient(0deg, #334155 0, #334155 4px, #fbbf24 4px, #fbbf24 6px); transform: translateX(-50%); height: 0; transition: height 0.3s;"></div>
+
+            <!-- 수로 (가운데 통로) -->
+            <div class="absolute overflow-hidden" style="left: 32%; right: 32%; top: 26%; bottom: 30%; background: linear-gradient(to bottom, #1e40af 0%, #1e3a8a 100%);">
+              <!-- 위에서 쏟아지는 물 (수문이 열린 만큼 위에서부터 보임) -->
+              <div id="h-water" class="water-rush absolute left-0 right-0 top-0" style="height: 0%; transition: height 0.3s;"></div>
+              <!-- 수문 (위에 매달려 있고, 슬라이더 늘리면 위로 끌어올려져 사라짐) -->
+              <div id="h-gate" class="absolute left-0 right-0 transition-transform duration-300"
+                   style="top: 0; height: 100%; background: linear-gradient(to bottom, #1e293b 0%, #0f172a 50%, #1e293b 100%); border: 3px solid #fbbf24; transform: translateY(0);">
+                <!-- 수문 표면의 가로 줄 (실제 수문 패널 느낌) -->
+                <div class="absolute left-2 right-2 h-1 bg-slate-500" style="top: 25%;"></div>
+                <div class="absolute left-2 right-2 h-1 bg-slate-500" style="top: 50%;"></div>
+                <div class="absolute left-2 right-2 h-1 bg-slate-500" style="top: 75%;"></div>
+                <!-- 윗부분 케이블 연결고리 -->
+                <div class="absolute left-1/2 -translate-x-1/2 -top-3 w-4 h-4 bg-amber-400 border-2 border-slate-800 rounded-full"></div>
+                <!-- "수문" 라벨 -->
+                <div class="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-white text-base font-bold font-title bg-slate-900/70 px-2 py-0.5 rounded">수문</div>
+              </div>
+            </div>
+
+            <!-- 댐 아래 (방류로) -->
+            <div class="absolute left-0 right-0" style="top: 70%; bottom: 0; background: linear-gradient(to bottom, #475569, #1e293b);"></div>
+
+            <!-- 떨어지는 물줄기 (수로 아래에서 터빈으로) -->
+            <div id="h-fall" class="absolute overflow-hidden" style="left: 32%; right: 32%; top: 70%; height: 0; transition: height 0.3s;">
+              <div class="water-rush absolute inset-0 opacity-90"></div>
+            </div>
+            <!-- 물보라 (수문 많이 열렸을 때) -->
+            <div id="h-splash" class="absolute opacity-0 transition-opacity duration-300" style="left: 32%; right: 32%; bottom: 16%; text-align: center; font-size: 40px;">💦 💦 💦</div>
+
+            <!-- 터빈 -->
+            <div class="absolute" style="left: 50%; bottom: 12%; transform: translateX(-50%);">
+              <div id="h-turbine" class="text-7xl" style="transform: rotate(0deg); transition: transform 0.1s linear;">⚙️</div>
+              <div class="text-xs font-bold text-white text-center mt-1 bg-slate-900/90 rounded px-2 py-0.5 font-title">터빈</div>
+            </div>
+
+            <!-- 박사님 카드 -->
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="bottom: 70px; left: 6px; width: 300px;">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
+                <div class="font-title text-sm">작동 설명</div>
+              </div>
+              <p id="h-msg" class="text-sm font-cute leading-snug">[수문 닫힘] 슬라이더를 올려 수문을 들어올리면 물이 쏟아져 나와요!</p>
+            </div>
+
+            <!-- 슬라이더 (수문 들어올리기) -->
+            <div class="absolute bottom-3 left-6 right-6 flex items-center gap-3 bg-white/95 rounded-2xl px-4 py-2 shadow border border-slate-200">
+              <span class="text-sm font-extrabold text-slate-700 shrink-0 font-title">⬆️ 수문 들어올리기</span>
+              <input id="h-slider" type="range" min="0" max="100" value="0" class="flex-1">
+              <span id="h-pct" class="text-sm font-bold text-blue-700 w-12 text-right tabular-nums">0%</span>
+            </div>
+          `;
+          const gate    = document.getElementById('h-gate');
+          const water   = document.getElementById('h-water');
+          const fall    = document.getElementById('h-fall');
+          const splash  = document.getElementById('h-splash');
+          const cable   = document.getElementById('h-cable');
+          const turbine = document.getElementById('h-turbine');
+          const slider  = document.getElementById('h-slider');
+          const pct     = document.getElementById('h-pct');
+          let angle = 0;
+          const msgEl = document.getElementById('h-msg');
+          const updateSlider = () => {
+            const v = parseFloat(slider.value);
+            slider.style.setProperty('--p', v + '%');
+            gate.style.transform = `translateY(-${v}%)`;
+            water.style.height = v + '%';
+            cable.style.height = Math.max(0, 20 - v * 0.2) + 'px';
+            fall.style.height = (v * 1.2) + 'px';
+            splash.style.opacity = v > 60 ? '1' : (v > 20 ? '0.5' : '0');
+            pct.textContent = v + '%';
+            // 박사님 메시지
+            if (v < 5)        msgEl.textContent = '[수문 닫힘] 슬라이더를 올려 수문을 들어올리세요! 물이 쏟아져 나와요.';
+            else if (v < 30)  msgEl.textContent = '[조금 열림] 물이 살짝 흘러요. 더 열면 발전량이 늘어요!';
+            else if (v < 70)  msgEl.textContent = '[잘 열림] 물이 콸콸 떨어져 터빈을 돌려요!';
+            else              msgEl.textContent = '[활짝 열림!] 어마어마한 물의 힘! 최대 발전량이에요! 💧💧💧';
+          };
+          slider.addEventListener('input', updateSlider);
+          updateSlider();
+          loopId = setInterval(() => {
+            const v = parseFloat(slider.value);
+            if (v > 0) {
+              angle = (angle + v * 0.6) % 360;
+              turbine.style.transform = `rotate(${angle}deg)`;
+              addEnergy(v * 0.018); // 0.045 → 0.018 (절반 이하로 느리게)
+            }
+          }, 100);
+          cleanupFn = () => clearInterval(loopId);
+        }
+      },
+
+      /* 🌱 바이오 — 물주기로 식물 키우기 → 수확 → 발전소(발효→메탄가스→전기) */
+      bio: {
+        init() {
+          const arena = document.getElementById('plant-arena');
+          arena.innerHTML = `
+            <!-- 하늘 + 들판 배경 -->
+            <div class="absolute inset-0" style="background: linear-gradient(to bottom, #7dd3fc 0%, #bae6fd 30%, #fde68a 55%, #65a30d 80%, #4d7c0f 100%);"></div>
+            <!-- 구름 -->
+            <div class="absolute text-3xl" style="top: 8px; left: 380px; opacity: 0.85;">☁️</div>
+            <div class="absolute text-2xl" style="top: 20px; left: 620px; opacity: 0.8;">☁️</div>
+            <div class="absolute text-2xl" style="top: 12px; left: 820px; opacity: 0.75;">☁️</div>
+            <!-- 해 -->
+            <div class="absolute text-4xl" style="top: 6px; right: 240px;">☀️</div>
+
+            <!-- 작동 설명 카드 -->
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15 z-10" style="top: 6px; left: 6px; width: 310px;">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
+                <div class="font-title text-sm">작동 설명</div>
+              </div>
+              <p id="b-msg" class="text-sm font-cute leading-snug">🚿 식물을 클릭해 물을 주세요! 4번 물을 주면 🌽이 됩니다.</p>
+            </div>
+
+            <!-- 단계 표시 (크게) -->
+            <div class="absolute flex items-center justify-center gap-2 font-title font-extrabold text-slate-800" style="top: 60px; left: 320px; right: 12px; height: 36px;">
+              <span class="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-900 shadow text-base">🚿 물주기</span>
+              <span class="text-emerald-700 text-lg">→</span>
+              <span class="px-3 py-1 rounded-xl bg-amber-100 text-amber-900 shadow text-base">🌽 수확</span>
+              <span class="text-emerald-700 text-lg">→</span>
+              <span class="px-3 py-1 rounded-xl bg-lime-100 text-lime-900 shadow text-base">🧺 모으기</span>
+              <span class="text-emerald-700 text-lg">→</span>
+              <span class="px-3 py-1 rounded-xl bg-violet-100 text-violet-900 shadow text-base">🏭 발전</span>
+            </div>
+
+            <!-- 밭 (흙) -->
+            <div class="absolute left-3 right-3" style="top: 110px; height: 170px; background: repeating-linear-gradient(90deg, #92400e, #92400e 50px, #78350f 50px, #78350f 100px); border-radius: 14px; box-shadow: inset 0 -10px 0 rgba(0,0,0,.15), inset 0 4px 0 rgba(255,255,255,.08);"></div>
+            <div id="b-plots" class="absolute left-3 right-3 grid grid-cols-5 gap-4 px-3" style="top: 112px; height: 168px;"></div>
+
+            <!-- 발전 원리 패널 (바이오 발전소 설명) -->
+            <div class="absolute rounded-2xl bg-white/95 border-2 border-emerald-400 shadow-lg p-2.5" style="top: 295px; left: 12px; right: 12px; height: 78px;">
+              <div class="font-title font-extrabold text-emerald-800 text-sm mb-1">🌱 바이오 발전소 원리</div>
+              <div class="flex items-center justify-around text-center font-bold text-slate-800 font-title text-sm">
+                <div><div class="text-3xl">🌽</div><div class="text-xs">식물(곡식)</div></div>
+                <div class="text-emerald-600 text-xl">→</div>
+                <div><div class="text-3xl">🫧</div><div class="text-xs">발효</div></div>
+                <div class="text-emerald-600 text-xl">→</div>
+                <div><div class="text-3xl">💨</div><div class="text-xs">메탄가스</div></div>
+                <div class="text-emerald-600 text-xl">→</div>
+                <div><div class="text-3xl">🔥</div><div class="text-xs">태우기</div></div>
+                <div class="text-emerald-600 text-xl">→</div>
+                <div><div class="text-3xl">⚡</div><div class="text-xs">전기 생산</div></div>
+              </div>
+            </div>
+
+            <!-- 바구니 (크게) -->
+            <div class="absolute" style="left: 30px; bottom: 16px;">
+              <div class="text-7xl drop-shadow-lg leading-none">🧺</div>
+              <div class="text-sm font-extrabold text-amber-900 text-center mt-0.5 font-title bg-white/85 rounded px-1.5 py-0.5">바구니</div>
+              <div id="b-basket-count" class="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-amber-500 text-white text-lg font-extrabold flex items-center justify-center shadow-lg border-2 border-white">0</div>
+            </div>
+
+            <!-- 바이오 발전소 (크게, 라벨/힌트 강조) -->
+            <button id="b-plant" class="absolute flex flex-col items-center active:scale-95 transition" style="right: 24px; bottom: 14px;">
+              <div class="relative">
+                <div class="text-8xl drop-shadow-xl leading-none">🏭</div>
+                <div id="b-plant-pulse" class="absolute inset-0 rounded-full" style="background: radial-gradient(circle, rgba(168,85,247,.0) 40%, rgba(168,85,247,0) 70%); pointer-events:none;"></div>
+              </div>
+              <div class="font-title font-extrabold text-base text-white bg-emerald-700 px-3 py-1 rounded-lg shadow mt-1 border-2 border-white">바이오 발전소</div>
+              <div class="text-xs font-bold text-violet-800 bg-violet-100 px-2 py-0.5 rounded mt-1 font-title">👆 클릭하면 ⚡전기 +15!</div>
+            </button>
+
+            <!-- 효과 레이어 -->
+            <div id="b-fx" class="absolute inset-0 pointer-events-none"></div>
+          `;
+          const plots = document.getElementById('b-plots');
+          const basketCountEl = document.getElementById('b-basket-count');
+          const fx = document.getElementById('b-fx');
+          const plantBtn = document.getElementById('b-plant');
+          const STAGES = ['🌰','🌱','🌿','🌾','🌽'];
+          const PLOT_COUNT = 5;
+          const states = [];
+          let basket = 0;
+
+          for (let i = 0; i < PLOT_COUNT; i++) {
+            const wrap = document.createElement('div');
+            wrap.className = 'relative flex items-end justify-center';
+            const el = document.createElement('button');
+            el.className = 'transition-transform select-none cursor-pointer leading-none active:scale-90';
+            el.style.fontSize = '72px';
+            el.textContent = STAGES[0];
+            const st = { stage: 0, el, wrap };
+            states.push(st);
+            wrap.appendChild(el);
+            plots.appendChild(wrap);
+
+            el.addEventListener('click', () => {
+              if (st.stage < 4) {
+                // 물주기로 한 단계 성장
+                st.stage += 1;
+                el.textContent = STAGES[st.stage];
+                // 물방울 효과
+                const rect = el.getBoundingClientRect();
+                const arenaRect = arena.getBoundingClientRect();
+                for (let k = 0; k < 4; k++) {
+                  const drop = document.createElement('div');
+                  drop.textContent = '💧';
+                  drop.className = 'absolute pointer-events-none';
+                  drop.style.fontSize = '22px';
+                  drop.style.left = (((rect.left - arenaRect.left) / __scale) + 18 + (k-1.5)*8) + 'px';
+                  drop.style.top  = (((rect.top  - arenaRect.top)  / __scale) - 18) + 'px';
+                  drop.style.animation = `dropFall 0.6s ease-in ${k*60}ms forwards`;
+                  fx.appendChild(drop);
+                  setTimeout(() => drop.remove(), 700 + k*60);
+                }
+                el.classList.add('anim-shake');
+                setTimeout(() => el.classList.remove('anim-shake'), 250);
+                if (st.stage === 4) {
+                  el.style.filter = 'drop-shadow(0 0 10px #fde047) drop-shadow(0 0 18px #facc15)';
+                  el.style.animation = 'gentlePulse 1.3s ease-in-out infinite';
+                }
+                updateBioMsg();
+              } else {
+                // 다 자란 🌽을 바구니로 날리기
+                const rect = el.getBoundingClientRect();
+                const arenaRect = arena.getBoundingClientRect();
+                const startX = (rect.left - arenaRect.left) / __scale;
+                const startY = (rect.top  - arenaRect.top)  / __scale;
+                const basketX = 50;
+                const basketY = 640 - 16 - 40;
+                const fly = document.createElement('div');
+                fly.textContent = '🌽';
+                fly.className = 'absolute pointer-events-none';
+                fly.style.fontSize = '48px';
+                fly.style.left = startX + 'px';
+                fly.style.top  = startY + 'px';
+                fly.style.setProperty('--fx', (basketX - startX) + 'px');
+                fly.style.setProperty('--fy', (basketY - startY) + 'px');
+                fly.style.animation = 'flyTo 0.7s ease-in forwards';
+                fx.appendChild(fly);
+                setTimeout(() => fly.remove(), 800);
+                // 바구니 카운트
+                basket++;
+                basketCountEl.textContent = basket;
+                basketCountEl.classList.add('anim-shake');
+                setTimeout(() => basketCountEl.classList.remove('anim-shake'), 300);
+                // 작물 리셋 (다시 씨앗부터)
+                st.stage = 0;
+                el.textContent = STAGES[0];
+                el.style.filter = '';
+                el.style.animation = '';
+                updateBioMsg();
+              }
+            });
+          }
+
+          const bMsg = document.getElementById('b-msg');
+          function updateBioMsg() {
+            const ripe = states.filter(st => st.stage === 4).length;
+            const growing = states.filter(st => st.stage > 0 && st.stage < 4).length;
+            if (basket > 0) bMsg.textContent = `[수확 완료] 바구니에 🌽 ${basket}개! 🏭 바이오 발전소를 클릭해 전기로 바꿔주세요!`;
+            else if (ripe > 0) bMsg.textContent = `[수확 가능] 🌽 ${ripe}개가 다 자랐어요! 클릭해 바구니로 보내요.`;
+            else if (growing > 0) bMsg.textContent = '[성장 중] 식물에 한 번 더 물을 주면 다음 단계로 자라요! 4번 주면 🌽 완성.';
+            else bMsg.textContent = '🚿 식물을 클릭해 물을 주세요! 🌰→🌱→🌿→🌾→🌽 (4번 클릭하면 완성)';
+          }
+
+          plantBtn.addEventListener('click', () => {
+            if (basket <= 0) {
+              plantBtn.classList.add('anim-shake');
+              setTimeout(() => plantBtn.classList.remove('anim-shake'), 300);
+              bMsg.textContent = '⚠ 바구니가 비어있어요! 먼저 식물에 물을 줘서 🌽을 키워주세요.';
+              return;
+            }
+            // 발전: 바구니 -1, 에너지 +15
+            basket--;
+            basketCountEl.textContent = basket;
+            addEnergy(15);
+            updateBioMsg();
+            // 발효→메탄가스→불꽃→전기 순차 효과
+            const seq = [
+              { emoji: '🫧', delay: 0,   color: '' },
+              { emoji: '💨', delay: 200, color: '' },
+              { emoji: '🔥', delay: 400, color: '' },
+              { emoji: '⚡', delay: 600, color: 'text-yellow-300' }
+            ];
+            seq.forEach(s => {
+              setTimeout(() => {
+                const e = document.createElement('div');
+                e.textContent = s.emoji;
+                e.className = 'absolute pointer-events-none font-title ' + s.color;
+                e.style.fontSize = '40px';
+                e.style.right = '70px';
+                e.style.bottom = '120px';
+                e.style.animation = 'flameOut 0.7s ease-out forwards';
+                e.style.setProperty('--tx', '0px');
+                fx.appendChild(e);
+                setTimeout(() => e.remove(), 800);
+              }, s.delay);
+            });
+          });
+
+          updateBioMsg();
+          cleanupFn = () => {};
+        }
+      },
+
+      /* 🌊 해양 — 파도가 부표를 위아래로 흔들면 발전기 회전 → 전기 */
+      ocean: {
+        init() {
+          const arena = document.getElementById('plant-arena');
+          arena.innerHTML = `
+            <!-- 하늘 + 바다 -->
+            <div class="absolute inset-0" style="background: linear-gradient(to bottom, #7dd3fc 0%, #bae6fd 22%, #67e8f9 40%, #06b6d4 60%, #0e7490 100%);"></div>
+            <!-- 갈매기 -->
+            <div class="absolute text-2xl" style="top: 10px; left: 80px;">🕊️</div>
+            <div class="absolute text-xl" style="top: 24px; left: 380px;">🕊️</div>
+            <div class="absolute text-2xl" style="top: 14px; right: 320px;">🕊️</div>
+            <!-- 해 -->
+            <div class="absolute text-4xl" style="top: 8px; right: 220px;">☀️</div>
+
+            <!-- 파도 (크게, 바닥부터 충분히 차오르게) -->
+            <svg id="o-wave-svg" class="absolute left-0 right-0 pointer-events-none" style="bottom: 70px; width: 100%; height: 240px;" viewBox="0 0 920 240" preserveAspectRatio="none">
+              <path id="o-wave-path"  d="M0,120 Q230,40 460,120 T920,120 L920,240 L0,240 Z" fill="#0891b2"/>
+              <path id="o-wave-path2" d="M0,150 Q230,90 460,150 T920,150 L920,240 L0,240 Z" fill="#0e7490" fill-opacity="0.78"/>
+              <path id="o-wave-foam"  d="M0,120 Q230,40 460,120 T920,120" stroke="white" stroke-width="4" fill="none" stroke-opacity="0.85"/>
+            </svg>
+
+            <!-- 부표를 잇는 막대 (위아래로 늘어남) -->
+            <div id="o-rod" class="absolute" style="left: 50%; bottom: 92px; transform: translateX(-50%); width: 6px; background: linear-gradient(to bottom, #f1f5f9, #64748b); border-radius: 3px; height: 60px; transition: height 0.05s linear; z-index: 3;"></div>
+
+            <!-- 부표 (파도 위에 떠 있음, h에 따라 위아래) -->
+            <div id="o-buoy" class="absolute" style="left: 50%; bottom: 150px; transform: translateX(-50%); font-size: 70px; line-height: 1; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); transition: bottom 0.05s linear, transform 0.15s; z-index: 4;">🛟</div>
+
+            <!-- 발전기 박스 (해저, 항상 고정) -->
+            <div class="absolute" style="left: 50%; bottom: 60px; transform: translateX(-50%); width: 80px; height: 36px; z-index: 2;">
+              <div class="absolute inset-0 rounded-md" style="background: linear-gradient(to bottom, #fbbf24, #d97706); border: 2px solid #78350f; box-shadow: 0 2px 6px rgba(0,0,0,.35);"></div>
+              <div id="o-gen-spark" class="absolute" style="left: 50%; top: -22px; transform: translateX(-50%); font-size: 26px; opacity: 0; transition: opacity 0.15s;">⚡</div>
+              <div class="absolute font-extrabold text-white font-title" style="left: 50%; top: 50%; transform: translate(-50%,-50%); text-shadow: 0 1px 2px rgba(0,0,0,.6); font-size: 11px;">발전기</div>
+            </div>
+            <!-- 바닷속 고정대 -->
+            <div class="absolute" style="left: 50%; bottom: 40px; transform: translateX(-50%); width: 100px; height: 14px; background: #334155; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,.4); z-index: 2;"></div>
+
+            <!-- 좌측 높이 게이지 -->
+            <div class="absolute bg-black/25 rounded-full overflow-hidden border-2 border-white/40" style="left: 8px; top: 90px; bottom: 90px; width: 18px;">
+              <div id="o-marker" class="w-full bg-yellow-300 shadow-lg shadow-yellow-400/50" style="position:absolute; bottom: 50%; height: 8px; transition: bottom 0.05s linear;"></div>
+            </div>
+            <div class="absolute font-bold text-white bg-emerald-700/90 rounded font-title" style="left: 30px; top: 86px; font-size: 11px; padding: 2px 6px;">⬆ 최고점</div>
+            <div class="absolute font-bold text-white bg-slate-700/90 rounded font-title" style="left: 30px; bottom: 86px; font-size: 11px; padding: 2px 6px;">⬇ 최저점</div>
+
+            <!-- 타이밍 신호 -->
+            <div id="o-signal" class="absolute font-title font-extrabold rounded-2xl shadow-xl transition-all duration-100 select-none pointer-events-none z-10"
+                 style="top: 130px; left: 50%; transform: translateX(-50%); background: #94a3b8; color: white; opacity: 0.7; padding: 8px 16px; font-size: 16px;">
+              💤 파도가 올라오는 중...
+            </div>
+
+            <!-- 작동 설명 카드 (원리 포함) -->
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15 z-10" style="top: 6px; left: 6px; width: 320px;">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
+                <div class="font-title text-sm">작동 설명</div>
+              </div>
+              <p id="o-msg" class="text-xs font-cute leading-snug">🌊 파도가 부표를 들어올리면 부표에 달린 막대가 바닷속 발전기를 돌려요. <b>부표가 최고점일 때 잡으면</b> 발전기가 가장 세게 돌아 전기가 많이 만들어져요!</p>
+              <div class="mt-1.5 font-title text-[10px] text-cyan-200">🌊 파도 → 🛟 부표 상승 → ↕ 막대 이동 → ⚙️ 발전기 회전 → ⚡ 전기</div>
+            </div>
+
+            <!-- 점수 안내 -->
+            <div id="o-score-hint" class="absolute font-title font-bold text-white drop-shadow z-10" style="top: 6px; right: 12px; font-size: 11px; line-height: 1.4; text-align: right; background: rgba(15,23,42,0.6); padding: 6px 10px; border-radius: 10px;">
+              <div>최고점 → <span class="text-yellow-300">⚡+15</span></div>
+              <div>거의 최고점 → <span class="text-emerald-200">⚡+8</span></div>
+              <div>중간 → <span class="text-cyan-100">⚡+4</span></div>
+              <div class="text-rose-200">아래쪽 → ⚡+1</div>
+            </div>
+
+            <!-- 가동 버튼 -->
+            <div class="absolute z-10" style="bottom: 12px; left: 12px; right: 12px;">
+              <button id="o-btn" class="w-full rounded-2xl bg-teal-500 hover:bg-teal-400 text-white font-extrabold shadow-xl shadow-teal-500/40 active:scale-95 transition font-title" style="padding: 12px 0; font-size: 18px;">
+                🌊 부표가 최고점일 때 잡기! (⚡ 지금!)
+              </button>
+            </div>
+          `;
+          const wavePath  = document.getElementById('o-wave-path');
+          const wavePath2 = document.getElementById('o-wave-path2');
+          const waveFoam  = document.getElementById('o-wave-foam');
+          const buoy      = document.getElementById('o-buoy');
+          const rod       = document.getElementById('o-rod');
+          const genSpark  = document.getElementById('o-gen-spark');
+          const marker    = document.getElementById('o-marker');
+          const signal    = document.getElementById('o-signal');
+          const msg       = document.getElementById('o-msg');
+          const btn       = document.getElementById('o-btn');
+          let t = 0, currentH = 0;
+
+          // 파도 SVG 위치(스토리 좌표): bottom: 70px, height: 240px, viewBox 240단위
+          // → SVG의 y(0~240)를 arena bottom 좌표로 변환: arena_bottom = 70 + (240 - y) = 310 - y
+          // 파도 상단 y = wave1Y_top (가장 위), 부표는 그 위에 살짝 띄워서 표시
+          loopId = setInterval(() => {
+            t += 0.09;
+            const h = (Math.sin(t) + 1) / 2; // 0~1
+            currentH = h;
+            // 파도 곡선: 위쪽 평균선이 h가 클수록 위로 올라옴
+            const baseY  = 130 - h*60; // 70(h=1) ~ 130(h=0) 사이로 평균선이 움직임
+            const a1     = 18 + 12*Math.sin(t*0.7); // 출렁임 진폭
+            wavePath.setAttribute('d', `M0,${baseY + a1} Q230,${baseY - a1*1.5} 460,${baseY + a1} T920,${baseY - a1} L920,240 L0,240 Z`);
+            wavePath2.setAttribute('d', `M0,${baseY + 28 + a1*0.6} Q230,${baseY + 28 - a1*0.9} 460,${baseY + 28 + a1*0.6} T920,${baseY + 28 - a1*0.6} L920,240 L0,240 Z`);
+            waveFoam.setAttribute('d', `M0,${baseY + a1} Q230,${baseY - a1*1.5} 460,${baseY + a1} T920,${baseY - a1}`);
+            // 부표는 파도 상단(평균선 baseY) 위에 살짝 띄워 떠 있음
+            // arena_bottom 위치 = 310 - baseY (평균선 기준) + 살짝 위로
+            const waveTopArenaY = 310 - baseY; // 파도 평균선의 arena 바닥 기준 y
+            const buoyBottom = waveTopArenaY + 8; // 부표가 파도 위에 약간 떠 있음
+            buoy.style.bottom = buoyBottom + 'px';
+            // 막대: 부표 아래에서 발전기 윗면(약 96px)까지 늘어남
+            rod.style.height = Math.max(20, buoyBottom - 96) + 'px';
+            // 발전기 스파크 — 부표가 빠르게 움직일 때
+            const speed = Math.abs(Math.cos(t));
+            genSpark.style.opacity = speed > 0.7 ? '0.9' : (speed > 0.4 ? '0.4' : '0');
+            // 게이지
+            marker.style.bottom = (h * 95) + '%';
+            // 신호
+            if (h > 0.85) {
+              signal.textContent = '⚡ 지금! (부표 최고점)';
+              signal.style.background = '#10b981';
+              signal.style.opacity = '1';
+              signal.style.transform = 'translateX(-50%) scale(1.15)';
+            } else if (h > 0.6) {
+              signal.textContent = '🌊 거의 최고점!';
+              signal.style.background = '#f59e0b';
+              signal.style.opacity = '0.95';
+              signal.style.transform = 'translateX(-50%) scale(1)';
+            } else if (h > 0.3) {
+              signal.textContent = '↕ 부표가 움직이고 있어요';
+              signal.style.background = '#06b6d4';
+              signal.style.opacity = '0.85';
+              signal.style.transform = 'translateX(-50%) scale(0.97)';
+            } else {
+              signal.textContent = '💤 파도가 낮아요... 기다려요';
+              signal.style.background = '#94a3b8';
+              signal.style.opacity = '0.7';
+              signal.style.transform = 'translateX(-50%) scale(0.93)';
+            }
+          }, 50);
+
+          btn.addEventListener('click', () => {
+            let gain = 1, why = '';
+            if (currentH > 0.85)      { gain = 15; why = '부표가 최고점! 막대가 가장 크게 움직여서 발전기가 세게 돕니다.'; }
+            else if (currentH > 0.60) { gain = 8;  why = '부표가 높이 올라왔어요. 발전기가 잘 돌아갑니다.'; }
+            else if (currentH > 0.30) { gain = 4;  why = '부표가 조금만 움직였어요. 발전기 회전이 약해요.'; }
+            else                       { gain = 1;  why = '부표가 거의 안 움직였어요. 전기가 거의 안 만들어집니다.'; }
+            addEnergy(gain);
+            msg.innerHTML = `<b>⚡ +${gain}!</b> ${why}`;
+            genSpark.textContent = '⚡';
+            genSpark.style.opacity = '1';
+            genSpark.style.fontSize = (24 + gain) + 'px';
+            setTimeout(() => { genSpark.style.fontSize = '26px'; }, 200);
+            buoy.style.transform = `translateX(-50%) scale(${1 + gain/30})`;
+            setTimeout(() => buoy.style.transform = 'translateX(-50%)', 200);
+          });
+          cleanupFn = () => clearInterval(loopId);
+        }
+      },
+    };
+
+    /* ===== 결과 화면 ===== */
+    function showEnd() {
+      const end = document.getElementById('screen-end');
+      end.classList.remove('hidden');
+      end.style.display = 'flex';
+    }
+    document.getElementById('btn-retry-all').addEventListener('click', () => {
+      completed.clear();
+      saveCompleted();
+      const end = document.getElementById('screen-end');
+      end.classList.add('hidden');
+      end.style.display = 'none';
+      renderHub();
+    });
+    document.getElementById('btn-complete').addEventListener('click', () => {
+      try {
+        const KEY = 'energy-explorer-v1';
+        const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+        saved.completed = Array.isArray(saved.completed) ? saved.completed : [];
+        [1,2,3].forEach(id => { if (!saved.completed.includes(id)) saved.completed.push(id); });
+        localStorage.setItem(KEY, JSON.stringify(saved));
+      } catch {}
+      if (window.appHelpers) appHelpers.reportProgress(3, { score: completed.size, plants: [...completed] });
+      location.href = 'index.html';
+    });
+
+    /* ===== 초기 ===== */
+    // 미션을 다시 할 수 있도록 진입할 때마다 발전소 진행 상태 초기화
+    completed.clear();
+    saveCompleted();
+    renderHub();
+  </script>
+</body>
+</html>

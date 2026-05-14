@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <style>
+    html, body { margin: 0; padding: 0; font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+    .card     { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; }
+    .pill     { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .bar-bg   { width: 100%; height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(to right, #10b981, #059669); transition: width 0.4s ease; }
+    .dot      { width: 8px; height: 8px; border-radius: 999px; background: #cbd5e1; display: inline-block; }
+    .dot.done { background: #10b981; }
+    .scroll   { max-height: 240px; overflow: auto; }
+    .scroll::-webkit-scrollbar { width: 6px; }
+    .scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    .pulsing  { animation: pulse 1.2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="text-slate-800 p-3">
+
+  <!-- 헤더 -->
+  <div class="flex items-center justify-between mb-2">
+    <div>
+      <div class="text-[10px] font-extrabold text-emerald-600 tracking-widest">LIVE</div>
+      <h2 class="text-lg font-extrabold leading-tight">📡 실시간 학습 현황</h2>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="auto-ind" class="pill bg-emerald-100 text-emerald-800" title="자동 새로고침 중">
+        <span class="dot done"></span> 자동
+      </span>
+      <button id="refresh-btn" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">🔁</button>
+    </div>
+  </div>
+  <div id="last-updated" class="text-[10px] text-slate-400 mb-3">⏳ 불러오는 중...</div>
+
+  <!-- 1) 전체 요약 -->
+  <div id="summary" class="grid grid-cols-2 gap-2 mb-3">
+    <div class="card text-center">
+      <div class="text-[10px] font-bold text-slate-500 mb-0.5">참여 학생</div>
+      <div class="flex items-end justify-center gap-1">
+        <span id="stat-active" class="text-2xl font-extrabold text-emerald-600 tabular-nums">-</span>
+        <span class="text-xs text-slate-400 font-bold mb-1">/ <span id="stat-total" class="tabular-nums">-</span></span>
+      </div>
+    </div>
+    <div class="card text-center">
+      <div class="text-[10px] font-bold text-slate-500 mb-0.5">전체 완료율</div>
+      <div class="text-2xl font-extrabold text-violet-600 tabular-nums"><span id="stat-pct">-</span>%</div>
+    </div>
+  </div>
+
+  <!-- 2) 미션별 완료 -->
+  <div class="card mb-3">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-xs font-extrabold text-slate-700">🎯 미션별 완료</div>
+      <div class="text-[10px] text-slate-400">완료 학생 수</div>
+    </div>
+    <div id="missions" class="space-y-1.5"></div>
+  </div>
+
+  <!-- 3) 학생별 진행 -->
+  <div class="card mb-3">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-xs font-extrabold text-slate-700">🧑‍🎓 학생별 진행</div>
+      <div class="text-[10px] text-slate-400">M1~M7 점</div>
+    </div>
+    <div id="students" class="scroll space-y-1"></div>
+  </div>
+
+  <!-- 4) 최근 활동 -->
+  <div class="card">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-xs font-extrabold text-slate-700">⚡ 최근 활동</div>
+      <div class="text-[10px] text-slate-400">최신 8건</div>
+    </div>
+    <div id="recent" class="scroll space-y-1 text-xs"></div>
+  </div>
+
+  <script>
+    const MISSION_INFO = {
+      1: { e:'🔥', t:'에너지 깨우기',    color:'from-orange-400 to-red-500' },
+      2: { e:'🗂️', t:'자원 분류',        color:'from-amber-400 to-orange-500' },
+      3: { e:'☀️', t:'재생에너지 발전',   color:'from-yellow-400 to-amber-500' },
+      4: { e:'🌍', t:'미래 시뮬레이션',   color:'from-emerald-400 to-green-600' },
+      5: { e:'🔍', t:'에너지 진단',       color:'from-sky-400 to-blue-500' },
+      6: { e:'🏠', t:'에코 하우스',       color:'from-indigo-400 to-purple-500' },
+      7: { e:'🏆', t:'골든벨 퀴즈',       color:'from-pink-400 to-rose-500' }
+    };
+
+    let lastFetch = null;
+    let timer = null;
+
+    function fmtTime(d) {
+      const x = new Date(d);
+      if (isNaN(x)) return '';
+      const hh = String(x.getHours()).padStart(2,'0');
+      const mm = String(x.getMinutes()).padStart(2,'0');
+      const ss = String(x.getSeconds()).padStart(2,'0');
+      return hh + ':' + mm + ':' + ss;
+    }
+
+    function render(stats) {
+      lastFetch = stats;
+      // 전체 요약
+      const total = stats.totalStudents || 0;
+      const studentsActive = (stats.perStudent || []).filter(s => (s.completed || []).length > 0).length;
+      const completedSum = (stats.perStudent || []).reduce((sum, s) => sum + (s.completed || []).length, 0);
+      const maxPossible = total * 7;
+      const pct = maxPossible > 0 ? Math.round(completedSum / maxPossible * 100) : 0;
+
+      document.getElementById('stat-active').textContent = studentsActive;
+      document.getElementById('stat-total').textContent  = total;
+      document.getElementById('stat-pct').textContent    = pct;
+
+      // 미션별
+      const mWrap = document.getElementById('missions');
+      mWrap.innerHTML = '';
+      for (let m = 1; m <= 7; m++) {
+        const info = MISSION_INFO[m];
+        const count = (stats.perMission && stats.perMission[m] && stats.perMission[m].count) || 0;
+        const pctM = total > 0 ? Math.round(count / total * 100) : 0;
+        const row = document.createElement('div');
+        row.innerHTML = `
+          <div class="flex items-center justify-between text-[11px] mb-0.5">
+            <span class="font-bold text-slate-700"><span class="mr-1">${info.e}</span>${info.t}</span>
+            <span class="tabular-nums font-extrabold text-emerald-700">${count}/${total}</span>
+          </div>
+          <div class="bar-bg"><div class="bar-fill" style="width: ${pctM}%"></div></div>
+        `;
+        mWrap.appendChild(row);
+      }
+
+      // 학생별 (M1~M7 점)
+      const sWrap = document.getElementById('students');
+      sWrap.innerHTML = '';
+      const students = stats.perStudent || [];
+      if (students.length === 0) {
+        sWrap.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-2">학생 정보가 없어요.</div>';
+      } else {
+        students.forEach(s => {
+          const completed = new Set(s.completed || []);
+          const dots = [1,2,3,4,5,6,7].map(m =>
+            `<span class="dot ${completed.has(m) ? 'done' : ''}" title="M${m}"></span>`
+          ).join(' ');
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between text-[11px] py-1 border-b border-slate-100 last:border-b-0';
+          row.innerHTML = `
+            <span class="font-bold text-slate-800 truncate" style="max-width: 90px;">${s.name}</span>
+            <span class="flex gap-0.5">${dots}</span>
+            <span class="tabular-nums font-extrabold text-slate-600 text-[10px]">${completed.size}/7</span>
+          `;
+          sWrap.appendChild(row);
+        });
+      }
+
+      // 최근 활동 — perStudent에서 최신 timestamp 추론이 어렵기 때문에 서버에 별도 호출
+      // 사이드바에서는 서버에서 직접 받아와야 하므로 별도 함수에서 처리
+      document.getElementById('last-updated').textContent = '⏱ 마지막 갱신: ' + fmtTime(new Date());
+    }
+
+    function renderRecent(rows) {
+      const wrap = document.getElementById('recent');
+      wrap.innerHTML = '';
+      if (!rows || rows.length === 0) {
+        wrap.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-2">아직 기록이 없어요.</div>';
+        return;
+      }
+      rows.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-2 py-1 border-b border-slate-100 last:border-b-0';
+        row.innerHTML = `
+          <span class="text-slate-500 tabular-nums text-[10px]">${fmtTime(r.time)}</span>
+          <span class="font-bold text-slate-800 truncate flex-1" title="${r.student}">${r.student}</span>
+          <span class="pill bg-emerald-100 text-emerald-800">M${r.mission}</span>
+        `;
+        wrap.appendChild(row);
+      });
+    }
+
+    function setLoading(on) {
+      const ind = document.getElementById('auto-ind');
+      if (on) ind.classList.add('pulsing'); else ind.classList.remove('pulsing');
+    }
+
+    function refresh() {
+      setLoading(true);
+      google.script.run
+        .withSuccessHandler(stats => {
+          render(stats);
+          // 최근 활동
+          google.script.run
+            .withSuccessHandler(renderRecent)
+            .withFailureHandler(() => renderRecent([]))
+            .getRecentRecords(8);
+          setLoading(false);
+        })
+        .withFailureHandler(err => {
+          document.getElementById('last-updated').textContent = '❌ 오류: ' + (err && err.message ? err.message : err);
+          setLoading(false);
+        })
+        .getDashboardStats();
+    }
+
+    document.getElementById('refresh-btn').onclick = refresh;
+
+    // 첫 로드 + 자동 새로고침 (10초마다)
+    refresh();
+    timer = setInterval(refresh, 10000);
+  </script>
+</body>
+</html>

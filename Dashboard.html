@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #f8fafc; }
+    .stats-tab { padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 800; font-size: 0.875rem; cursor: pointer; border: none; }
+    .stats-tab.active { background: #7c3aed; color: white; }
+    .stats-tab.inactive { background: #f1f5f9; color: #334155; }
+    .stats-tab.inactive:hover { background: #e2e8f0; }
+    #content { padding: 1.25rem; height: calc(100% - 110px); overflow: auto; }
+  </style>
+</head>
+<body class="text-slate-800">
+
+  <!-- 헤더 -->
+  <div class="flex items-center justify-between px-5 py-3 bg-white border-b shadow-sm">
+    <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">📊 우리 반 학습 통계</h2>
+    <button id="refresh-btn" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold">🔁 새로고침</button>
+  </div>
+
+  <!-- 탭 -->
+  <div class="px-5 py-2 bg-white border-b flex gap-2 flex-wrap">
+    <button class="stats-tab active"   data-tab="overview">🌍 전체 요약</button>
+    <button class="stats-tab inactive" data-tab="missions">🎯 미션별</button>
+    <button class="stats-tab inactive" data-tab="students">🧑‍🎓 학생별</button>
+    <button class="stats-tab inactive" data-tab="quiz">🏆 골든벨 점수</button>
+  </div>
+
+  <!-- 본문 -->
+  <div id="content">
+    <div class="text-center text-slate-400 py-12">⏳ 데이터를 불러오는 중...</div>
+  </div>
+
+  <script>
+    const MISSION_INFO = {
+      1: { emoji: '🔥', title: '불씨를 살려라!',      lesson: '1차시',     color: 'from-orange-400 to-red-500' },
+      2: { emoji: '🗂️', title: '자원 분류 카드',      lesson: '2차시',     color: 'from-amber-400 to-orange-500' },
+      3: { emoji: '☀️', title: '재생에너지 발전소',    lesson: '3~4차시',   color: 'from-yellow-400 to-amber-500' },
+      4: { emoji: '🌱', title: '100년 후 지구',        lesson: '5차시',     color: 'from-emerald-400 to-green-600' },
+      5: { emoji: '💡', title: '우리집 에너지 진단',    lesson: '6~7차시',   color: 'from-sky-400 to-blue-500' },
+      6: { emoji: '🏠', title: '효율적 집 만들기',      lesson: '8~9차시',   color: 'from-indigo-400 to-purple-500' },
+      7: { emoji: '🏆', title: '미래 전문가 & 골든벨',  lesson: '10~11차시', color: 'from-pink-400 to-rose-500' },
+    };
+
+    let stats = null;
+    let currentTab = 'overview';
+    const content = document.getElementById('content');
+
+    function load() {
+      content.innerHTML = '<div class="text-center text-slate-400 py-12">⏳ 데이터를 불러오는 중...</div>';
+      google.script.run
+        .withSuccessHandler(data => {
+          stats = data;
+          render();
+        })
+        .withFailureHandler(err => {
+          content.innerHTML = '<div class="text-center text-rose-700 font-bold py-12">⚠️ 통계를 불러올 수 없어요<br><span class="text-sm text-slate-500 font-normal">' + (err.message || err) + '</span></div>';
+        })
+        .getDashboardStats();
+    }
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.stats-tab').forEach(b => {
+        if (b.dataset.tab === tab) { b.classList.add('active'); b.classList.remove('inactive'); }
+        else { b.classList.remove('active'); b.classList.add('inactive'); }
+      });
+      render();
+    }
+    document.querySelectorAll('.stats-tab').forEach(b => {
+      b.addEventListener('click', () => setTab(b.dataset.tab));
+    });
+    document.getElementById('refresh-btn').addEventListener('click', load);
+
+    function render() {
+      if (!stats) return;
+      if (currentTab === 'overview')      content.innerHTML = renderOverview();
+      else if (currentTab === 'missions') content.innerHTML = renderMissions();
+      else if (currentTab === 'students') content.innerHTML = renderStudents();
+      else if (currentTab === 'quiz')     content.innerHTML = renderQuiz();
+    }
+
+    function renderOverview() {
+      const total = stats.totalStudents || 0;
+      let completedAll = 0, totalCompletions = 0;
+      (stats.perStudent || []).forEach(s => {
+        if (s.completed.length === 7) completedAll++;
+        totalCompletions += s.completed.length;
+      });
+      const avgPct = total > 0 ? Math.round(totalCompletions / (total * 7) * 100) : 0;
+      const quizArr = stats.quizScores || [];
+      const avgQuiz = quizArr.length > 0
+        ? (quizArr.reduce((a,b) => a + b.score, 0) / quizArr.length).toFixed(1)
+        : '-';
+      return `
+        <div class="grid grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl p-5 shadow border-2 border-violet-200 flex flex-col items-center justify-center">
+            <div class="text-4xl mb-2">🧑‍🎓</div>
+            <div class="text-sm text-slate-500 font-bold">전체 학생</div>
+            <div class="text-4xl font-extrabold text-violet-700 tabular-nums">${total}</div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 shadow border-2 border-emerald-200 flex flex-col items-center justify-center">
+            <div class="text-4xl mb-2">🏆</div>
+            <div class="text-sm text-slate-500 font-bold">단원 완수자</div>
+            <div class="text-4xl font-extrabold text-emerald-700 tabular-nums">${completedAll}</div>
+            <div class="text-xs text-slate-500 mt-0.5">/ ${total}명</div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 shadow border-2 border-sky-200 flex flex-col items-center justify-center">
+            <div class="text-4xl mb-2">📊</div>
+            <div class="text-sm text-slate-500 font-bold">평균 진행률</div>
+            <div class="text-4xl font-extrabold text-sky-700 tabular-nums">${avgPct}<span class="text-2xl">%</span></div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 shadow border-2 border-amber-200 flex flex-col items-center justify-center">
+            <div class="text-4xl mb-2">⭐</div>
+            <div class="text-sm text-slate-500 font-bold">골든벨 평균</div>
+            <div class="text-4xl font-extrabold text-amber-700 tabular-nums">${avgQuiz}<span class="text-2xl">${avgQuiz==='-'?'':'/8'}</span></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMissions() {
+      const total = stats.totalStudents || 0;
+      let rows = '';
+      for (let m = 1; m <= 7; m++) {
+        const data = (stats.perMission && stats.perMission[m]) || { count: 0 };
+        const pct = total > 0 ? Math.round(data.count / total * 100) : 0;
+        const info = MISSION_INFO[m];
+        rows += `
+          <div class="bg-white rounded-2xl p-4 shadow flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br ${info.color} flex items-center justify-center text-2xl shadow border-4 border-white shrink-0">${info.emoji}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline">
+                <div>
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-extrabold">${info.lesson}</span>
+                  <span class="text-base font-extrabold text-slate-900 ml-2">${info.title}</span>
+                </div>
+                <div class="text-xl font-extrabold text-violet-700 tabular-nums">${data.count}<span class="text-sm text-slate-500">/${total}</span></div>
+              </div>
+              <div class="mt-2 h-3 rounded-full bg-slate-100 overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-violet-400 to-fuchsia-500" style="width: ${pct}%;"></div>
+              </div>
+              <div class="text-xs text-slate-500 mt-1">완료율 ${pct}%</div>
+            </div>
+          </div>
+        `;
+      }
+      return '<div class="grid grid-cols-2 gap-3">' + rows + '</div>';
+    }
+
+    function renderStudents() {
+      const students = stats.perStudent || [];
+      if (students.length === 0) return '<div class="text-center text-slate-400 py-12">등록된 학생이 없어요</div>';
+      const headerCells = [1,2,3,4,5,6,7].map(m =>
+        `<th class="px-2 py-2 text-center font-extrabold text-slate-700 text-xs">${MISSION_INFO[m].emoji}<br>${m}</th>`
+      ).join('');
+      let rows = students.map(s => {
+        let cells = '';
+        for (let m = 1; m <= 7; m++) {
+          const done = s.completed.includes(m);
+          cells += `<td class="text-center py-2 ${done ? 'bg-emerald-50' : ''}">${done ? '<span class="text-emerald-600 font-extrabold text-lg">✓</span>' : '<span class="text-slate-300">·</span>'}</td>`;
+        }
+        return `
+          <tr class="border-t border-slate-100 hover:bg-violet-50">
+            <td class="px-3 py-2 font-bold text-slate-800 whitespace-nowrap text-sm">${s.name}</td>
+            ${cells}
+            <td class="px-3 py-2 text-center">
+              <span class="px-2 py-0.5 rounded-full ${s.completed.length === 7 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'} text-xs font-extrabold">
+                ${s.completed.length}/7
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      return `
+        <div class="bg-white rounded-2xl shadow overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-3 py-2 text-left font-extrabold text-slate-700">학생</th>
+                ${headerCells}
+                <th class="px-3 py-2 text-center font-extrabold text-slate-700">진행</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderQuiz() {
+      const scores = stats.quizScores || [];
+      if (scores.length === 0) return '<div class="text-center text-slate-400 py-12">아직 골든벨 결과가 없어요</div>';
+      const buckets = [0,0,0,0,0,0,0,0,0];
+      scores.forEach(s => { const v = Math.round(s.score); if (v >= 0 && v <= 8) buckets[v]++; });
+      const max = Math.max(...buckets, 1);
+      const avg = (scores.reduce((a,b) => a + b.score, 0) / scores.length).toFixed(2);
+      const distribution = buckets.map((c, i) => {
+        const h = Math.round(c / max * 100);
+        const color = i >= 7 ? 'from-emerald-400 to-emerald-600'
+                    : i >= 5 ? 'from-amber-400 to-amber-600'
+                    : i >= 3 ? 'from-orange-400 to-orange-600'
+                             : 'from-rose-400 to-rose-600';
+        return `
+          <div class="flex-1 flex flex-col items-center gap-2" style="min-height: 200px;">
+            <div class="text-xs font-bold text-slate-600 tabular-nums">${c}명</div>
+            <div class="w-full flex-1 flex items-end">
+              <div class="w-full rounded-t-xl bg-gradient-to-t ${color}" style="height: ${h}%; min-height: 4px;"></div>
+            </div>
+            <div class="text-sm font-extrabold text-slate-700 tabular-nums">${i}점</div>
+          </div>
+        `;
+      }).join('');
+      const top = scores.slice().sort((a,b) => b.score - a.score).slice(0, 10);
+      const topList = top.map((s, i) => `
+        <div class="flex items-center justify-between px-3 py-2 rounded-xl ${i === 0 ? 'bg-amber-50 border border-amber-200' : i < 3 ? 'bg-slate-50' : ''}">
+          <div class="flex items-center gap-2">
+            <span class="text-base font-extrabold text-slate-500 tabular-nums w-6">${i + 1}.</span>
+            <span class="font-bold text-slate-800">${s.student}</span>
+          </div>
+          <span class="font-extrabold text-amber-700 tabular-nums">${s.score}<span class="text-xs text-slate-500">/8</span></span>
+        </div>
+      `).join('');
+      return `
+        <div class="grid grid-cols-3 gap-4">
+          <div class="col-span-2 bg-white rounded-2xl p-5 shadow">
+            <div class="flex items-baseline justify-between mb-2">
+              <h3 class="text-lg font-extrabold text-slate-900">점수 분포</h3>
+              <div class="text-sm text-slate-500">평균 <b class="text-amber-700 text-base">${avg}</b> / 8</div>
+            </div>
+            <div class="flex items-stretch gap-2 py-3 border-b border-slate-100">${distribution}</div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 shadow">
+            <h3 class="text-lg font-extrabold text-slate-900 mb-3">🏅 TOP 10</h3>
+            <div class="space-y-1.5 text-sm">${topList}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 초기 로드
+    load();
+  </script>
+</body>
+</html>

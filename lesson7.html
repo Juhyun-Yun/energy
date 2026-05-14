@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>10~11차시 · 미래 전문가 & 골든벨</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <style>
+    :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #4c1d95; color: #0f172a; touch-action: none; }
+    #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
+
+    @keyframes pop { 0%{ transform: scale(0.6); opacity: 0; } 60%{ transform: scale(1.1); opacity: 1; } 100%{ transform: scale(1); } }
+    @keyframes floatY { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-8px);} }
+    @keyframes drift { 0%{ transform: translateX(-10px);} 100%{ transform: translateX(40px);} }
+    @keyframes shimmer {
+      0%   { background-position: -100% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes confetti {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(720px) rotate(720deg); opacity: 0; }
+    }
+
+    .anim-pop    { animation: pop 0.4s ease-out both; }
+    .anim-float  { animation: floatY 3s ease-in-out infinite; }
+    .anim-drift  { animation: drift 25s linear infinite alternate; }
+    .anim-confetti { animation: confetti linear forwards; }
+
+    .gold-text {
+      background: linear-gradient(110deg, #b45309, #fbbf24 30%, #fef08a 50%, #fbbf24 70%, #b45309);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: shimmer 4s linear infinite;
+    }
+
+    .quiz-option {
+      transition: transform 0.15s, background-color 0.2s, border-color 0.2s;
+    }
+    .quiz-option:hover { transform: translateY(-2px); }
+    .quiz-option.correct {
+      background: #d1fae5 !important;
+      border-color: #10b981 !important;
+      color: #065f46;
+    }
+    .quiz-option.wrong {
+      background: #fee2e2 !important;
+      border-color: #ef4444 !important;
+      color: #991b1b;
+    }
+    .quiz-option:disabled { cursor: default; }
+  </style>
+</head>
+<body>
+  <div id="stage-wrapper">
+    <div id="stage">
+
+      <!-- 배경 -->
+      <div class="absolute inset-0 bg-gradient-to-br from-violet-300 via-fuchsia-200 to-rose-200"></div>
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-8 right-12 text-6xl opacity-90 anim-float">🌟</div>
+        <div class="absolute top-12 left-12 text-5xl opacity-80 anim-drift">☁️</div>
+        <div class="absolute top-32 right-1/3 text-4xl opacity-70 anim-drift" style="animation-delay: -15s;">☁️</div>
+      </div>
+
+      <!-- 상단바 -->
+      <header class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-5 bg-white/70 backdrop-blur border-b border-white/70 shadow-sm" style="height: 60px;">
+        <a href="index.html" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-amber-50 text-sm font-bold text-slate-700 shadow-sm transition active:scale-95">
+          <span>←</span> 지도로
+        </a>
+        <div class="text-center">
+          <div class="text-[11px] text-amber-700 font-extrabold tracking-widest">MISSION 7</div>
+          <h1 class="text-xl font-extrabold text-slate-900 leading-tight">🏆 최고의 에너지 박사에 도전하자!</h1>
+        </div>
+        <div id="hud-info" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white shadow-sm border border-pink-200 text-sm font-bold text-pink-700">
+          단원 마무리
+        </div>
+      </header>
+
+      <!-- ============ 1) 인트로 ============ -->
+      <section id="screen-intro" class="absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+        <div class="h-full flex items-center justify-center p-5 gap-5">
+          <div class="w-[42%] h-full bg-white rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center text-center anim-pop">
+            <div class="text-[140px] mb-2 leading-none anim-float">🏆</div>
+            <div class="inline-block px-4 py-1 rounded-full bg-pink-100 border border-pink-300 text-pink-800 font-extrabold text-sm tracking-[0.25em] mb-3">
+              MISSION 7
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-1">최고의 에너지 박사에 도전하자!</h2>
+            <p class="text-pink-700 text-base font-bold">미션 7 · 단원 마무리</p>
+          </div>
+
+          <div class="w-[55%] h-full flex flex-col gap-3">
+            <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5">
+              <div class="flex items-center gap-2 text-amber-800 font-extrabold text-xl mb-2">
+                <span class="text-2xl">🤔</span> 마지막 미션이에요!
+              </div>
+              <p class="text-slate-800 text-base leading-relaxed">
+                자원과 에너지 단원의 마지막이에요. <b>미래 에너지 전문가</b>들의 이야기를 듣고,
+                <b class="text-violet-700">골든벨 퀴즈</b>로 단원을 마무리해요!
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-2xl bg-emerald-50 border-2 border-emerald-200 p-4">
+                <div class="text-4xl mb-1 text-center">🔬</div>
+                <div class="text-sm font-extrabold text-emerald-800 text-center">① 전문가 만나기</div>
+                <div class="text-xs text-emerald-700 text-center mt-0.5">4명의 미래 전문가</div>
+              </div>
+              <div class="rounded-2xl bg-violet-50 border-2 border-violet-200 p-4">
+                <div class="text-4xl mb-1 text-center">📋</div>
+                <div class="text-sm font-extrabold text-violet-800 text-center">② 골든벨 퀴즈</div>
+                <div class="text-xs text-violet-700 text-center mt-0.5">8문제로 단원 정리</div>
+              </div>
+            </div>
+
+            <div class="bg-pink-50 border-2 border-pink-200 rounded-2xl p-4">
+              <div class="text-base font-extrabold text-pink-800 mb-1">🏆 최종 보상</div>
+              <p class="text-sm text-slate-700 leading-relaxed">
+                모두 마치면 <b>에너지 박사 인증서</b>를 받을 수 있어요!
+              </p>
+            </div>
+
+            <button id="btn-start"
+                    class="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white text-2xl font-extrabold shadow-xl shadow-pink-500/40 transition active:scale-95 mt-auto">
+              ▶ 시작하기
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 2) 전문가 ============ -->
+      <section id="screen-experts" class="hidden absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+        <div class="h-full flex items-center justify-center p-5 gap-5">
+          <!-- 왼쪽: 전문가 카드 -->
+          <div id="exp-card" class="w-[42%] h-full rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center text-center anim-pop bg-gradient-to-br from-amber-200 to-orange-300">
+            <div id="exp-emoji" class="text-[150px] mb-3 leading-none anim-float drop-shadow-2xl">🧑‍🔬</div>
+            <h2 id="exp-name" class="text-3xl font-extrabold text-slate-900 mb-1">김태양 박사</h2>
+            <p id="exp-title" class="text-lg font-bold mb-3 px-4 py-1 rounded-full bg-white/70">태양광 에너지 전문가</p>
+          </div>
+
+          <!-- 오른쪽 -->
+          <div class="w-[55%] h-full flex flex-col gap-4">
+            <div class="bg-white rounded-2xl p-5 shadow-xl border-2 border-amber-200 relative">
+              <div class="absolute -top-3 left-5 px-3 py-0.5 rounded-full bg-amber-500 text-white text-xs font-extrabold">💬 전문가의 한마디</div>
+              <p id="exp-quote" class="text-xl leading-relaxed text-slate-800 italic mt-2">"태양은 가장 큰 에너지원이에요!"</p>
+            </div>
+
+            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 flex-1">
+              <div class="text-sm font-extrabold text-violet-800 mb-2">💡 알아두기</div>
+              <p id="exp-fact" class="text-lg text-slate-800 leading-relaxed">한국에서 태양광으로 전체 전기의 약 5%를 만들고 있어요.</p>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <div id="exp-dots" class="flex gap-1.5"></div>
+                <span class="text-sm font-bold text-slate-600 ml-2"><span id="exp-cur">1</span> / 4</span>
+              </div>
+              <button id="btn-next-exp" class="px-6 py-3 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white text-lg font-extrabold shadow-lg active:scale-95 transition">
+                다음 전문가 →
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 3) 퀴즈 시작 알림 ============ -->
+      <section id="screen-quiz-intro" class="hidden absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+        <div class="h-full flex items-center justify-center p-5">
+          <div class="bg-white rounded-3xl p-10 shadow-2xl text-center max-w-2xl anim-pop">
+            <div class="text-9xl mb-4">📋</div>
+            <h2 class="text-4xl font-extrabold text-slate-900 mb-2">골든벨 퀴즈!</h2>
+            <p class="text-xl text-slate-700 mb-5">단원에서 배운 내용을 8문제로 정리해 봐요.</p>
+            <p class="text-base text-slate-500 mb-6">정답을 많이 맞히면 <b class="text-amber-600">에너지 박사 인증서</b>를 받을 수 있어요!</p>
+            <button id="btn-start-quiz" class="px-10 py-4 rounded-2xl bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-400 hover:to-pink-400 text-white text-2xl font-extrabold shadow-xl shadow-violet-500/40 active:scale-95 transition">
+              ▶ 퀴즈 시작!
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 4) 퀴즈 ============ -->
+      <section id="screen-quiz" class="hidden absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+        <div class="h-full flex p-5 gap-5">
+          <div class="flex-1 bg-white rounded-3xl p-6 shadow-2xl flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm text-violet-700 font-extrabold">❓ <span id="q-num">1</span>번 문제</div>
+              <div class="px-3 py-1 rounded-full bg-amber-100 border border-amber-200 text-sm font-bold text-amber-800">⭐ <span id="q-score">0</span> 정답</div>
+            </div>
+            <h3 class="text-2xl font-extrabold text-slate-900 mb-5 leading-tight" id="q-text">질문</h3>
+            <div id="q-options" class="space-y-2.5"></div>
+            <div id="q-result" class="hidden mt-4 p-4 rounded-2xl">
+              <div class="text-lg font-extrabold mb-1" id="q-result-text"></div>
+              <p class="text-base leading-relaxed" id="q-explain"></p>
+            </div>
+            <div class="mt-auto pt-3">
+              <button id="btn-next-q" class="hidden w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white font-extrabold text-lg shadow-lg shadow-violet-500/30 transition active:scale-95">
+                다음 →
+              </button>
+            </div>
+          </div>
+
+          <div class="w-[28%] flex flex-col gap-3">
+            <div class="bg-white rounded-3xl p-5 shadow-2xl">
+              <div class="text-center mb-3">
+                <div class="text-sm font-bold text-slate-600">진행</div>
+                <div class="text-5xl font-extrabold text-violet-700 tabular-nums leading-none">
+                  <span id="prog-cur">1</span><span class="text-2xl text-slate-400">/8</span>
+                </div>
+              </div>
+              <div class="h-3 rounded-full bg-slate-200 overflow-hidden">
+                <div id="prog-bar" class="h-full bg-gradient-to-r from-violet-400 to-fuchsia-500 transition-all duration-500" style="width: 12.5%;"></div>
+              </div>
+            </div>
+            <div class="bg-gradient-to-br from-amber-100 to-yellow-200 rounded-3xl p-5 shadow border-2 border-amber-200 flex-1 flex flex-col items-center justify-center">
+              <div class="text-base font-extrabold text-amber-700 mb-1">현재 점수</div>
+              <div class="text-7xl font-extrabold text-amber-600 tabular-nums leading-none" id="big-score">0</div>
+              <div class="text-sm font-bold text-amber-700 mt-1">정답</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 5) 인증서 ============ -->
+      <section id="screen-end" class="hidden absolute z-10" style="top: 60px; left: 0; right: 0; bottom: 0;">
+        <div id="confetti-layer" class="absolute inset-0 pointer-events-none z-20"></div>
+        <div class="h-full flex flex-col items-center justify-center p-5 gap-3">
+          <!-- 인증서 -->
+          <div id="cert-card" class="relative bg-gradient-to-br from-amber-50 to-yellow-100 shadow-2xl anim-pop" style="width: 840px; height: 490px; border: 8px double #92400e; border-radius: 12px;">
+            <div class="absolute top-4 left-5 text-3xl">✨</div>
+            <div class="absolute bottom-4 left-5 text-3xl">✨</div>
+            <div class="absolute bottom-4 right-5 text-3xl">✨</div>
+
+            <!-- 액션 버튼 (편집 + 다운로드) -->
+            <div class="absolute top-3 right-3 flex gap-2 z-10">
+              <button id="btn-edit-cert"
+                      class="px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white border border-amber-400 text-xs font-extrabold text-amber-800 shadow active:scale-95 transition">
+                ✏️ 정보 편집
+              </button>
+              <button id="btn-download-cert"
+                      class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-700 text-white text-xs font-extrabold shadow active:scale-95 transition disabled:opacity-60">
+                📥 다운로드
+              </button>
+            </div>
+
+            <div class="h-full flex flex-col items-center justify-center text-center px-12">
+              <div class="text-5xl mb-1">🏆</div>
+              <div class="text-sm font-bold text-amber-700 tracking-widest mb-1">CERTIFICATE OF COMPLETION</div>
+              <h1 class="text-4xl font-extrabold gold-text mb-2">에너지 박사 인증서</h1>
+
+              <div class="my-2" style="width: 70%; height: 2px; background: #92400e;"></div>
+
+              <p class="text-base text-slate-800 leading-relaxed mt-2 mb-0.5">
+                위 학생 <span id="cert-name" class="font-extrabold text-amber-800 px-2 underline decoration-amber-700 decoration-2 underline-offset-4">_______________</span> 은(는)
+              </p>
+              <p class="text-base text-slate-800 leading-relaxed mb-0.5">
+                <b class="text-amber-700">"자원과 에너지"</b> 단원의 모든 미션을 완수하였고
+              </p>
+              <p class="text-base text-slate-800 leading-relaxed mb-2">
+                골든벨 퀴즈에서 <b class="text-emerald-700 text-xl"><span id="cert-score">8</span> / 8</b> 정답을 맞혀
+              </p>
+              <p id="cert-title" class="text-xl font-extrabold text-amber-800 mb-2">🌟 에너지 박사로 인증되었습니다!</p>
+
+              <div class="my-2" style="width: 50%; height: 1px; background: #92400e;"></div>
+
+              <div class="grid grid-cols-3 gap-4 mt-2 text-xs w-full max-w-xl">
+                <div>
+                  <div class="text-[10px] text-slate-500 mb-0.5">발급 날짜</div>
+                  <div class="font-bold text-slate-800" id="cert-date">_____</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-500 mb-0.5">발급 기관</div>
+                  <div class="font-bold text-slate-800" id="cert-org">_____________</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-500 mb-0.5">발급자</div>
+                  <div class="font-bold text-slate-800" id="cert-issuer">_____________</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 첫 진입 안내 -->
+          <div id="cert-hint" class="hidden px-4 py-2 rounded-xl bg-amber-100 border border-amber-300 text-amber-900 text-sm font-bold shadow">
+            💡 인증서를 출력하기 전에 우측 상단의 <b>"✏️ 정보 편집"</b>을 눌러 학생·발급 정보를 입력해 주세요!
+          </div>
+
+          <!-- 버튼 -->
+          <div class="flex gap-3" style="width: 840px;">
+            <button id="btn-retry-quiz"
+                    class="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-base border border-slate-200 transition active:scale-95">
+              🔁 퀴즈 다시
+            </button>
+            <button id="btn-complete-all"
+                    class="flex-[2] py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-extrabold text-base shadow-lg shadow-emerald-500/40 transition active:scale-95">
+              ✓ 단원 마치기 · 지도로
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 인증서 정보 편집 모달 -->
+      <div id="edit-modal" class="absolute inset-0 z-[60] hidden items-center justify-center bg-slate-900/55 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 anim-pop" style="width: 520px;">
+          <h3 class="text-2xl font-extrabold text-slate-900 mb-1 text-center">✏️ 인증서 정보 편집</h3>
+          <p class="text-sm text-slate-600 text-center mb-5">학생·발급자 정보는 자동 저장돼서 다음에도 사용돼요</p>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-extrabold text-slate-700 mb-1">학생 이름</label>
+              <input id="in-name" type="text" maxlength="20" placeholder="예: 김민준"
+                     class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-violet-400 outline-none text-base font-bold">
+            </div>
+            <div>
+              <label class="block text-sm font-extrabold text-slate-700 mb-1">발급 기관</label>
+              <input id="in-org" type="text" maxlength="40" placeholder="예: ○○초등학교 / 5학년 1반 교실"
+                     class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-violet-400 outline-none text-base font-bold">
+            </div>
+            <div>
+              <label class="block text-sm font-extrabold text-slate-700 mb-1">발급자 (선생님 성함)</label>
+              <input id="in-issuer" type="text" maxlength="30" placeholder="예: 담임 ○○○ 선생님"
+                     class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-violet-400 outline-none text-base font-bold">
+            </div>
+          </div>
+
+          <div class="flex gap-2 mt-5">
+            <button id="btn-cancel-edit"
+                    class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition active:scale-95">
+              취소
+            </button>
+            <button id="btn-save-edit"
+                    class="flex-[2] py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-extrabold shadow-lg shadow-violet-500/30 transition active:scale-95">
+              ✓ 저장
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ===== 스케일 ===== */
+    let __scale = 1;
+    function fitStage() {
+      const stage = document.getElementById('stage');
+      if (!stage) return;
+      __scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      stage.style.transform = `scale(${__scale})`;
+    }
+    window.addEventListener('resize', fitStage);
+    window.addEventListener('orientationchange', fitStage);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', fitStage);
+    fitStage();
+    window.addEventListener('load', fitStage);
+
+    /* ===== 전문가 데이터 ===== */
+    const EXPERTS = [
+      { emoji:'🧑‍🔬', name:'김태양 박사', title:'태양광 에너지 전문가',
+        quote:'"태양은 가장 큰 에너지원이에요! 1시간 동안 지구에 닿는 햇빛이 1년치 인류 에너지보다 많아요."',
+        fact:'한국에서 태양광으로 전체 전기의 약 5%를 만들고 있어요. 옥상에 패널 한 장만 깔아도 전기차 한 대분 전기가 나와요!',
+        bg:'bg-gradient-to-br from-amber-200 to-orange-300', titleColor:'text-amber-800' },
+      { emoji:'👩‍🔬', name:'박바람 박사', title:'풍력 발전 전문가',
+        quote:'"바다 위 풍력이 미래의 답이에요. 육지보다 바람이 강하고 일정해서 많은 전기를 안정적으로 만들죠."',
+        fact:'대형 풍력 터빈 1대가 1년에 약 2,000가구가 쓰는 전기를 만들 수 있어요. 우리나라 서해안에도 큰 풍력 단지가 늘고 있어요!',
+        bg:'bg-gradient-to-br from-sky-200 to-blue-300', titleColor:'text-sky-800' },
+      { emoji:'🧑‍🌾', name:'이바이오 박사', title:'바이오 에너지 전문가',
+        quote:'"음식물 쓰레기도 에너지가 돼요! 미생물이 분해하면서 만든 메탄가스로 전기를 만들 수 있어요."',
+        fact:'우리나라 음식물 쓰레기로 매년 약 30만 가구분의 전기를 만들고 있어요. 쓰레기가 자원으로 변하는 마법이에요!',
+        bg:'bg-gradient-to-br from-emerald-200 to-green-300', titleColor:'text-emerald-800' },
+      { emoji:'👨‍💼', name:'정수소 박사', title:'수소 에너지 전문가',
+        quote:'"수소는 미래의 청정 연료예요! 태우면 물만 나와서 공기가 깨끗해져요."',
+        fact:'수소차는 1번 충전으로 600km 이상 달릴 수 있고, 배기가스가 깨끗한 물뿐이에요. 진짜 친환경 자동차예요!',
+        bg:'bg-gradient-to-br from-cyan-200 to-teal-300', titleColor:'text-cyan-800' },
+    ];
+
+    /* ===== 퀴즈 데이터 ===== */
+    const QUIZ = [
+      { q:'다음 중 재생 자원이 아닌 것은?',
+        options:['⚫ 석탄','☀️ 햇빛','💨 바람','💧 강물'], correct:0,
+        explain:'석탄은 한 번 다 쓰면 다시 만들어지지 않는 비재생 자원이에요! 햇빛·바람·강물은 자연이 계속 만들어줘요.' },
+      { q:'재생 에너지의 좋은 점이 아닌 것은?',
+        options:['공기를 덜 더럽혀요','한 번 쓰면 끝이에요','계속 다시 만들어져요','환경을 보호해요'], correct:1,
+        explain:'재생에너지는 자연이 끊임없이 다시 만들어주기 때문에 끝이 없어요. 그게 바로 재생에너지의 장점!' },
+      { q:'땅속의 뜨거운 열을 이용한 에너지는?',
+        options:['☀️ 태양광','💨 풍력','♨️ 지열','🌊 해양'], correct:2,
+        explain:'땅속 깊은 곳의 뜨거운 열을 이용하는 게 바로 지열 에너지예요. 화산이나 온천 지역에서 특히 잘 활용해요!' },
+      { q:'에너지를 절약하는 가장 좋은 습관은?',
+        options:['에어컨 18°C로 켜기','안 보는 TV 켜둔 채로','냉장고 문 오래 열어두기','쓰지 않을 때 전기 끄기'], correct:3,
+        explain:'사용하지 않을 때 전기 제품을 끄는 작은 습관이 가장 큰 절약을 만들어요! 적정 온도는 여름 26°C예요.' },
+      { q:'다음 중 재생에너지가 아닌 것은?',
+        options:['석유 에너지','태양 에너지','풍력 에너지','수력 에너지'], correct:0,
+        explain:'석유는 화석연료, 비재생 자원이에요! 재생에너지에는 태양·풍력·수력·해양·지열·바이오 6가지가 있어요.' },
+      { q:'"지속가능한 자원 이용"이 의미하는 것은?',
+        options:['지금 많이 빨리 쓰기','미래에도 쓸 수 있게 아끼고 효율적으로 쓰기','한 번에 다 쓰기','신경 쓰지 않기'], correct:1,
+        explain:'지속가능한 이용은 미래 세대까지 자원을 계속 쓸 수 있게 아끼고 효율적으로 쓰는 거예요. 우리의 책임이에요!' },
+      { q:'효율적인 집의 특징이 아닌 것은?',
+        options:['단열재로 벽을 두껍게','이중창으로 열 차단','창문을 항상 열어두기','LED 조명 사용'], correct:2,
+        explain:'창문을 항상 열어두면 냉난방 에너지가 다 새요. 효율적인 집은 단열·이중창·LED·태양광 같은 기술을 활용해요!' },
+      { q:'미래의 깨끗한 지구를 위해 우리가 할 수 있는 일은?',
+        options:['자원을 마음껏 쓰기','한 번 쓰고 버리기','쓰레기를 많이 만들기','에너지를 절약하고 재생에너지를 활용하기'], correct:3,
+        explain:'에너지를 아끼고, 재생에너지를 활용하고, 효율적인 방법을 찾는 것이 미래 지구를 위한 길이에요! 🌍✨' },
+    ];
+
+    /* ===== 상태 ===== */
+    let expIdx = 0;
+    let qIdx = 0;
+    let score = 0;
+    let answered = false;
+
+    /* ===== 인트로 ===== */
+    document.getElementById('btn-start').addEventListener('click', () => {
+      document.getElementById('screen-intro').classList.add('hidden');
+      document.getElementById('screen-experts').classList.remove('hidden');
+      expIdx = 0; renderExpert();
+    });
+
+    /* ===== 전문가 ===== */
+    function renderExpert() {
+      const e = EXPERTS[expIdx];
+      document.getElementById('exp-emoji').textContent = e.emoji;
+      document.getElementById('exp-name').textContent  = e.name;
+      document.getElementById('exp-title').textContent = e.title;
+      document.getElementById('exp-title').className   = `text-lg font-bold mb-3 px-4 py-1 rounded-full bg-white/70 ${e.titleColor}`;
+      document.getElementById('exp-quote').textContent = e.quote;
+      document.getElementById('exp-fact').textContent  = e.fact;
+      const card = document.getElementById('exp-card');
+      card.className = `w-[42%] h-full rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center text-center anim-pop ${e.bg}`;
+      // 강제 애니메이션 재시작
+      card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+
+      // 진행 점
+      const dots = document.getElementById('exp-dots');
+      dots.innerHTML = '';
+      for (let i = 0; i < EXPERTS.length; i++) {
+        const d = document.createElement('span');
+        d.className = 'inline-block w-2.5 h-2.5 rounded-full ' + (i <= expIdx ? 'bg-violet-500' : 'bg-slate-300');
+        dots.appendChild(d);
+      }
+      document.getElementById('exp-cur').textContent = (expIdx + 1);
+      document.getElementById('btn-next-exp').textContent = (expIdx === EXPERTS.length - 1) ? '퀴즈 시작 →' : '다음 전문가 →';
+    }
+    document.getElementById('btn-next-exp').addEventListener('click', () => {
+      expIdx++;
+      if (expIdx >= EXPERTS.length) {
+        document.getElementById('screen-experts').classList.add('hidden');
+        document.getElementById('screen-quiz-intro').classList.remove('hidden');
+      } else {
+        renderExpert();
+      }
+    });
+
+    /* ===== 퀴즈 ===== */
+    document.getElementById('btn-start-quiz').addEventListener('click', () => {
+      qIdx = 0; score = 0;
+      document.getElementById('screen-quiz-intro').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+      renderQ();
+    });
+
+    function renderQ() {
+      answered = false;
+      const item = QUIZ[qIdx];
+      document.getElementById('q-num').textContent  = (qIdx + 1);
+      document.getElementById('q-text').textContent = item.q;
+      document.getElementById('q-score').textContent = score;
+      document.getElementById('big-score').textContent = score;
+      document.getElementById('prog-cur').textContent = (qIdx + 1);
+      document.getElementById('prog-bar').style.width = (((qIdx + 1) / QUIZ.length) * 100).toFixed(1) + '%';
+
+      const opts = document.getElementById('q-options');
+      opts.innerHTML = '';
+      item.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option w-full text-left px-5 py-4 rounded-2xl bg-slate-50 border-2 border-slate-200 text-lg font-bold text-slate-800';
+        btn.textContent = (['ⓐ','ⓑ','ⓒ','ⓓ'])[i] + '  ' + opt;
+        btn.addEventListener('click', () => answer(i));
+        opts.appendChild(btn);
+      });
+      document.getElementById('q-result').classList.add('hidden');
+      document.getElementById('btn-next-q').classList.add('hidden');
+    }
+
+    function answer(picked) {
+      if (answered) return;
+      answered = true;
+      const item = QUIZ[qIdx];
+      const ok = picked === item.correct;
+      if (ok) score++;
+      const buttons = document.getElementById('q-options').querySelectorAll('button');
+      buttons.forEach((b, i) => {
+        b.disabled = true;
+        if (i === item.correct) b.classList.add('correct');
+        else if (i === picked) b.classList.add('wrong');
+      });
+
+      const result = document.getElementById('q-result');
+      const rt     = document.getElementById('q-result-text');
+      const ex     = document.getElementById('q-explain');
+      ex.textContent = item.explain;
+      if (ok) {
+        result.className = 'mt-4 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200';
+        rt.innerHTML = '✓ <span class="text-emerald-700">정답이에요!</span>';
+      } else {
+        result.className = 'mt-4 p-4 rounded-2xl bg-rose-50 border-2 border-rose-200';
+        rt.innerHTML = '✗ <span class="text-rose-700">아쉬워요. 다시 한번 봐요!</span>';
+      }
+      document.getElementById('q-score').textContent = score;
+      document.getElementById('big-score').textContent = score;
+
+      const nextBtn = document.getElementById('btn-next-q');
+      nextBtn.textContent = (qIdx === QUIZ.length - 1) ? '🏆 결과 보기' : '다음 →';
+      nextBtn.classList.remove('hidden');
+    }
+
+    document.getElementById('btn-next-q').addEventListener('click', () => {
+      qIdx++;
+      if (qIdx >= QUIZ.length) endQuiz();
+      else renderQ();
+    });
+
+    /* ===== 인증서 정보 (선생님이 직접 입력) ===== */
+    const CERT_KEY = 'cert-info';
+    const PLACEHOLDER = '_______________';
+    function loadCertInfo() {
+      try { return JSON.parse(localStorage.getItem(CERT_KEY) || '{}'); }
+      catch { return {}; }
+    }
+    function saveCertInfo(info) {
+      localStorage.setItem(CERT_KEY, JSON.stringify(info));
+    }
+    function renderCertInfo() {
+      const info = loadCertInfo();
+      const set = (id, val, weak) => {
+        const el = document.getElementById(id);
+        if (val && val.trim()) {
+          el.textContent = val;
+          el.style.color = '';
+          el.classList.remove('opacity-50');
+        } else {
+          el.textContent = weak || PLACEHOLDER;
+          el.style.color = '#94a3b8';
+        }
+      };
+      set('cert-name',   info.name);
+      set('cert-org',    info.org);
+      set('cert-issuer', info.issuer);
+
+      // 비어있는 항목이 있으면 안내 표시
+      const allFilled = info.name && info.org && info.issuer;
+      const hint = document.getElementById('cert-hint');
+      if (allFilled) hint.classList.add('hidden');
+      else           hint.classList.remove('hidden');
+    }
+
+    /* ===== 편집 모달 ===== */
+    const editModal = document.getElementById('edit-modal');
+    function openEditModal() {
+      const info = loadCertInfo();
+      document.getElementById('in-name').value   = info.name   || '';
+      document.getElementById('in-org').value    = info.org    || '';
+      document.getElementById('in-issuer').value = info.issuer || '';
+      editModal.classList.remove('hidden');
+      editModal.classList.add('flex');
+      setTimeout(() => document.getElementById('in-name').focus(), 80);
+    }
+    function closeEditModal() {
+      editModal.classList.add('hidden');
+      editModal.classList.remove('flex');
+    }
+    document.getElementById('btn-edit-cert').addEventListener('click', openEditModal);
+
+    /* ===== 인증서 다운로드 (PNG) ===== */
+    async function downloadCertificate() {
+      const info = loadCertInfo();
+      if (!info.name || !info.org || !info.issuer) {
+        const proceed = confirm(
+          '학생 이름·발급 기관·발급자 중 빈 항목이 있어요.\n' +
+          '그래도 다운로드 할까요?\n\n' +
+          '(취소 후 ✏️ 정보 편집에서 입력할 수 있어요)'
+        );
+        if (!proceed) return;
+      }
+
+      const btn = document.getElementById('btn-download-cert');
+      const orig = btn.textContent;
+      btn.textContent = '⏳ 만드는 중...';
+      btn.disabled = true;
+
+      try {
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+        const canvas = document.createElement('canvas');
+        const W = 1680, H = 980;
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        const emojiFont = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+        const koFont = '"Pretendard Variable",Pretendard,system-ui,sans-serif';
+
+        // 1. 배경
+        const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+        bgGrad.addColorStop(0, '#fef3c7');
+        bgGrad.addColorStop(1, '#fef9c3');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // 2. 더블 테두리
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(40, 40, W - 80, H - 80);
+        ctx.lineWidth = 3;
+        ctx.strokeRect(70, 70, W - 140, H - 140);
+
+        // 3. 모서리 ✨
+        ctx.font = `70px ${emojiFont}`;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText('✨', 130, 140);
+        ctx.fillText('✨', W - 130, 140);
+        ctx.fillText('✨', 130, H - 140);
+        ctx.fillText('✨', W - 130, H - 140);
+
+        const cx = W / 2;
+
+        // 4. 트로피
+        ctx.font = `150px ${emojiFont}`;
+        ctx.fillText('🏆', cx, 200);
+
+        // 5. 영문 부제
+        ctx.font = `bold 32px ${koFont}`;
+        ctx.fillStyle = '#b45309';
+        ctx.fillText('CERTIFICATE OF COMPLETION', cx, 305);
+
+        // 6. 메인 타이틀 (골드 그라데이션)
+        ctx.font = `900 96px ${koFont}`;
+        const goldGrad = ctx.createLinearGradient(cx - 480, 0, cx + 480, 0);
+        goldGrad.addColorStop(0,   '#b45309');
+        goldGrad.addColorStop(0.3, '#fbbf24');
+        goldGrad.addColorStop(0.5, '#fde68a');
+        goldGrad.addColorStop(0.7, '#fbbf24');
+        goldGrad.addColorStop(1,   '#b45309');
+        ctx.fillStyle = goldGrad;
+        ctx.fillText('에너지 박사 인증서', cx, 395);
+
+        // 7. 구분선 1
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx - 500, 460); ctx.lineTo(cx + 500, 460);
+        ctx.stroke();
+
+        // 8. 본문
+        const name = info.name || '_______________';
+        ctx.font = `500 38px ${koFont}`;
+        ctx.fillStyle = '#1e293b';
+        // 학생 이름을 강조하기 위해 텍스트를 나눠서 그리기
+        const part1 = '위 학생  ';
+        const namePart = name;
+        const part3 = '  은(는)';
+        const w1 = ctx.measureText(part1).width;
+        const wn = ctx.measureText(namePart).width;
+        const w3 = ctx.measureText(part3).width;
+        const totalW = w1 + wn + w3;
+        const startX = cx - totalW / 2;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#1e293b';
+        ctx.fillText(part1, startX, 540);
+        // 이름 강조 (밑줄 + 색)
+        ctx.fillStyle = '#b45309';
+        ctx.font = `900 42px ${koFont}`;
+        ctx.fillText(namePart, startX + w1, 540);
+        // 밑줄
+        const nameW = ctx.measureText(namePart).width;
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(startX + w1 - 4, 562);
+        ctx.lineTo(startX + w1 + nameW + 4, 562);
+        ctx.stroke();
+        ctx.fillStyle = '#1e293b';
+        ctx.font = `500 38px ${koFont}`;
+        ctx.fillText(part3, startX + w1 + nameW, 540);
+        ctx.textAlign = 'center';
+
+        ctx.font = `500 36px ${koFont}`;
+        ctx.fillText('"자원과 에너지" 단원의 모든 미션을 완수하였고', cx, 610);
+        ctx.fillText(`골든벨 퀴즈에서  ${score} / 8  정답을 맞혀`, cx, 660);
+
+        // 9. 결과 칭호
+        let outcome;
+        if (score >= 7)      outcome = '🌟 에너지 박사로 인증되었습니다!';
+        else if (score >= 5) outcome = '🥈 에너지 전문가로 인증되었습니다!';
+        else if (score >= 3) outcome = '🥉 에너지 탐험가로 인증되었습니다!';
+        else                 outcome = '💪 도전한 용기를 응원합니다!';
+        ctx.font = `900 52px ${koFont}`;
+        ctx.fillStyle = '#92400e';
+        ctx.fillText(outcome, cx, 740);
+
+        // 10. 구분선 2
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 350, 800); ctx.lineTo(cx + 350, 800);
+        ctx.stroke();
+
+        // 11. 푸터 (3컬럼)
+        const t = new Date();
+        const dateStr = `${t.getFullYear()}년 ${t.getMonth()+1}월 ${t.getDate()}일`;
+        const xLeft  = cx - 460;
+        const xMid   = cx;
+        const xRight = cx + 460;
+
+        ctx.font = `500 22px ${koFont}`;
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('발급 날짜', xLeft,  855);
+        ctx.fillText('발급 기관', xMid,   855);
+        ctx.fillText('발급자',   xRight, 855);
+
+        ctx.font = `700 28px ${koFont}`;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(dateStr,                          xLeft,  900);
+        ctx.fillText(info.org    || '_______________', xMid,   900);
+        ctx.fillText(info.issuer || '_______________', xRight, 900);
+
+        // PNG 변환 + 다운로드
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            alert('인증서 생성에 실패했어요. 다시 시도해 주세요.');
+            btn.textContent = orig;
+            btn.disabled = false;
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          const safeName = (info.name || '학생').replace(/[\\\/:*?"<>|]/g, '').trim() || '학생';
+          const d = `${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`;
+          a.download = `에너지박사인증서_${safeName}_${d}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          btn.textContent = '✓ 저장됨!';
+          setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+        }, 'image/png');
+      } catch (err) {
+        console.error(err);
+        alert('인증서 생성 중 오류가 발생했어요: ' + err.message);
+        btn.textContent = orig;
+        btn.disabled = false;
+      }
+    }
+    document.getElementById('btn-download-cert').addEventListener('click', downloadCertificate);
+    document.getElementById('btn-cancel-edit').addEventListener('click', closeEditModal);
+    document.getElementById('btn-save-edit').addEventListener('click', () => {
+      const info = {
+        name:   document.getElementById('in-name').value.trim(),
+        org:    document.getElementById('in-org').value.trim(),
+        issuer: document.getElementById('in-issuer').value.trim(),
+      };
+      saveCertInfo(info);
+      renderCertInfo();
+      closeEditModal();
+    });
+    editModal.addEventListener('click', e => { if (e.target === editModal) closeEditModal(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !editModal.classList.contains('hidden')) closeEditModal();
+    });
+
+    /* ===== 인증서 ===== */
+    function endQuiz() {
+      document.getElementById('cert-score').textContent = score;
+      const certTitle = document.getElementById('cert-title');
+      if (score >= 7)      certTitle.textContent = '🌟 에너지 박사로 인증되었습니다!';
+      else if (score >= 5) certTitle.textContent = '🥈 에너지 전문가로 인증되었습니다!';
+      else if (score >= 3) certTitle.textContent = '🥉 에너지 탐험가로 인증되었습니다!';
+      else                 certTitle.textContent = '💪 도전한 용기를 응원합니다!';
+
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일`;
+      document.getElementById('cert-date').textContent = dateStr;
+
+      renderCertInfo();
+
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-end').classList.remove('hidden');
+      makeConfetti();
+    }
+
+    function makeConfetti() {
+      const layer = document.getElementById('confetti-layer');
+      layer.innerHTML = '';
+      const emojis = ['🎉','🎊','⭐','✨','🌟','🏆','💛','💚'];
+      for (let i = 0; i < 28; i++) {
+        const c = document.createElement('span');
+        c.className = 'absolute text-2xl anim-confetti';
+        c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        c.style.left = Math.random() * 100 + '%';
+        c.style.top = '-20px';
+        c.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+        c.style.animationDelay = (Math.random() * 0.8) + 's';
+        layer.appendChild(c);
+      }
+      setTimeout(() => layer.innerHTML = '', 5000);
+    }
+
+    document.getElementById('btn-retry-quiz').addEventListener('click', () => {
+      qIdx = 0; score = 0;
+      document.getElementById('screen-end').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+      renderQ();
+    });
+
+    document.getElementById('btn-complete-all').addEventListener('click', () => {
+      try {
+        const KEY = 'energy-explorer-v1';
+        const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+        saved.completed = Array.isArray(saved.completed) ? saved.completed : [];
+        [1,2,3,4,5,6,7].forEach(id => { if (!saved.completed.includes(id)) saved.completed.push(id); });
+        localStorage.setItem(KEY, JSON.stringify(saved));
+      } catch {}
+      if (window.appHelpers) {
+        const certInfo = loadCertInfo();
+        appHelpers.reportProgress(7, { score, certName: certInfo.name || '' });
+      }
+      location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
