@@ -478,7 +478,7 @@
        =========================================== */
     const MINIGAMES = {
 
-      /* ☀️ 햇빛 전력소 — 정렬된 레이아웃 + 패널 각도 조작 + 박사님 카드 */
+      /* ☀️ 햇빛 전력소 — 자동 태양 이동 + 강화된 전구 효과 + 광자 색상 변화 */
       solar: {
         init() {
           const arena = document.getElementById('plant-arena');
@@ -488,15 +488,23 @@
               @keyframes photonFall {
                 0%   { transform: translate(0,0); opacity: 0; }
                 15%  { opacity: 1; }
-                85%  { opacity: 1; }
-                100% { transform: translate(var(--dx,200px), var(--dy,300px)); opacity: 0; }
+                100% { transform: translate(var(--dx,200px), var(--dy,300px)); opacity: 1; }
+              }
+              @keyframes chargeFlow {
+                0%   { transform: translate(0,0); opacity: 1; background: #60a5fa; box-shadow: 0 0 8px #60a5fa; }
+                100% { transform: translate(var(--tx,200px), var(--ty,0)); opacity: 0; background: #fde047; box-shadow: 0 0 12px #fde047; }
               }
               @keyframes rainFall {
                 0% { transform: translate(0,0); opacity: 0; }
                 10% { opacity: 0.8; }
                 100% { transform: translate(var(--dx,5px), 360px); opacity: 0; }
               }
-              .photon { position: absolute; width: 7px; height: 7px; border-radius: 9999px; background: radial-gradient(circle, #fffbeb, #fde047 60%, #fbbf24); box-shadow: 0 0 10px rgba(251,191,36,0.9); pointer-events: none; }
+              @keyframes bulbGlow {
+                0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+                50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+              }
+              .photon { position: absolute; width: 8px; height: 8px; border-radius: 9999px; background: radial-gradient(circle, #fffbeb, #fde047 60%, #fbbf24); box-shadow: 0 0 10px rgba(251,191,36,0.9); pointer-events: none; z-index: 10; }
+              .charge { position: absolute; width: 6px; height: 6px; border-radius: 9999px; pointer-events: none; z-index: 15; }
               .raindrop { position: absolute; width: 2px; height: 10px; background: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(186,230,253,0.95)); border-radius: 1px; pointer-events: none; }
               .weather-tab { color: rgba(255,255,255,0.7); transition: all 0.2s; }
               .weather-tab.active { background: linear-gradient(to right, #fbbf24, #f59e0b); color: white; box-shadow: 0 2px 8px rgba(251,191,36,0.4); }
@@ -504,14 +512,15 @@
               .star-bg::before { content: ''; position: absolute; inset:0; background-image: radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1.5px), radial-gradient(circle, rgba(255,255,255,0.35) 1px, transparent 1.5px); background-size: 55px 75px, 90px 50px; background-position: 0 0, 27px 37px; }
               @keyframes wireDash { to { stroke-dashoffset: -28; } }
               .wire-active { stroke-dasharray: 6 8; animation: wireDash 0.6s linear infinite; }
+              #s-bulb-halo { position: absolute; width: 120px; height: 120px; background: radial-gradient(circle, rgba(254,243,199,0.8) 0%, rgba(251,191,36,0.2) 50%, transparent 70%); border-radius: 50%; pointer-events: none; mix-blend-mode: screen; opacity: 0; transition: opacity 0.3s; animation: bulbGlow 2s infinite ease-in-out; }
             </style>
-
+ 
             <!-- 배경 (하늘 + 땅) -->
             <div id="s-sky" class="absolute top-0 left-0 right-0 transition-all duration-700" style="height: 62%; background: linear-gradient(to bottom, #38bdf8, #7dd3fc);"></div>
             <div class="absolute left-0 right-0 star-bg" style="top: 0; height: 62%; opacity: 0.3;"></div>
             <div class="absolute left-0 right-0" style="top: 62%; bottom: 0; background: linear-gradient(to bottom, #166534 0%, #14532d 100%);"></div>
             <div class="absolute left-0 right-0 star-bg" style="top: 62%; bottom: 0; opacity: 0.25;"></div>
-
+ 
             <!-- 상단 바 -->
             <div class="absolute top-2 left-2 right-2 z-20 flex items-center justify-between gap-2">
               <div class="px-3 py-1.5 rounded-2xl bg-slate-900/85 text-white font-title text-base shadow border border-white/20 shrink-0">
@@ -527,12 +536,14 @@
                 <div class="text-lg font-extrabold tabular-nums leading-tight"><span id="s-watts">0</span><span class="text-xs ml-0.5">W</span></div>
               </div>
             </div>
-
-            <!-- 태양 -->
-            <div id="s-sun-wrap" class="absolute transition-opacity duration-500" style="top: 70px; left: 38%; transform: translateX(-50%);">
-              <div id="s-sun" class="w-20 h-20 rounded-full" style="background: radial-gradient(circle at 35% 30%, #fffbeb, #fde68a 55%, #fbbf24); box-shadow: 0 0 50px 15px rgba(254,243,199,0.75); animation: sunBob 3s ease-in-out infinite;"></div>
+ 
+            <!-- 태양 (자동 이동) -->
+            <div id="s-sun-wrap" class="absolute transition-opacity duration-500" style="top: 100px; left: 10%; transform: translate(-50%, -50%);">
+              <div id="s-sun" class="w-20 h-20 rounded-full" style="background: radial-gradient(circle at 35% 30%, #fffbeb, #fde68a 55%, #fbbf24); box-shadow: 0 0 60px 20px rgba(254,243,199,0.8); animation: sunBob 3s ease-in-out infinite;"></div>
+              <!-- 시간 표시 -->
+              <div id="s-time-label" class="absolute top-full mt-4 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/40 text-white text-[10px] rounded font-title whitespace-nowrap">오전 08:00</div>
             </div>
-
+ 
             <!-- 구름들 (cloudy 모드) -->
             <div id="s-clouds" class="absolute hidden" style="top: 20px; left: 25%; width: 50%; height: 100px;">
               <span class="absolute" style="left: 0;   top: 30px; font-size: 60px;">☁️</span>
@@ -540,62 +551,58 @@
               <span class="absolute" style="left: 55%; top: 25px; font-size: 70px;">☁️</span>
               <span class="absolute" style="left: 85%; top: 40px; font-size: 50px;">☁️</span>
             </div>
-
+ 
             <!-- 비구름 (rainy 모드) -->
             <div id="s-rain-cloud" class="absolute hidden" style="top: 10px; left: 25%; width: 55%; height: 110px;">
               <span class="absolute" style="left: 5%;  top: 20px; font-size: 70px; filter: brightness(0.7);">☁️</span>
               <span class="absolute" style="left: 45%; top: 0;    font-size: 80px; filter: brightness(0.7);">☁️</span>
               <span class="absolute" style="left: 75%; top: 30px; font-size: 60px; filter: brightness(0.7);">☁️</span>
             </div>
-
+ 
             <!-- 빛 입자 / 빗방울 레이어 -->
             <div id="s-particles" class="absolute inset-0 pointer-events-none"></div>
-
-            <!-- 전선 (패널 받침 → 전구 받침, 단순 직선) -->
+ 
+            <!-- 전선 (패널 받침 → 전구 받침) -->
             <div class="absolute" style="left: 35%; right: 25%; bottom: 91px; height: 4px; background: #0f172a; border-radius: 2px; z-index: 1;"></div>
             <div id="s-wire-flow" class="absolute" style="left: 35%; right: 25%; bottom: 91.5px; height: 3px; opacity: 0; z-index: 2;
                  background-image: linear-gradient(90deg, transparent 0%, transparent 25%, #fbbf24 25%, #fbbf24 50%, transparent 50%, transparent 75%, #fbbf24 75%, #fbbf24 100%); background-size: 28px 100%;
                  animation: wireSlide 0.5s linear infinite; border-radius: 2px;"></div>
-
-            <!-- 패널 시스템: 기둥+받침+회전된 패널 (왼쪽 35%) -->
+ 
+            <!-- 패널 시스템 -->
             <div class="absolute" style="left: 35%; bottom: 90px; z-index: 3;">
-              <!-- 회전된 패널 (기둥 위에 위치, 드래그 가능) -->
-              <div id="s-panel-tilt" style="position: absolute; left: 0; bottom: 60px; transform: translateX(-50%) rotate(33deg); transform-origin: center bottom; transition: transform 0.08s linear; cursor: grab; touch-action: none;">
+              <div id="s-panel-tilt" style="position: absolute; left: 0; bottom: 60px; transform: translateX(-50%) rotate(0deg); transform-origin: center bottom; transition: transform 0.08s linear; cursor: grab; touch-action: none;">
                 <div id="s-panel-grid" class="grid grid-cols-8 gap-px p-1 bg-slate-900 rounded shadow-2xl" style="width: 200px;"></div>
+                <!-- 화살표 가이드 (최적 각도 표시) -->
+                <div id="s-angle-guide" class="absolute -top-12 left-1/2 -translate-x-1/2 text-2xl transition-opacity duration-300 opacity-0">🎯</div>
               </div>
-              <!-- 기둥 -->
               <div style="position: absolute; left: -1.5px; bottom: 6px; transform: translateX(-50%); width: 4px; height: 55px; background: linear-gradient(to right, #64748b, #334155); border-radius: 1px;"></div>
-              <!-- 받침 (전선과 연결되는 노란 단자 포함) -->
               <div style="position: absolute; left: 0; bottom: 0; transform: translateX(-50%); width: 64px; height: 7px; background: #334155; border-radius: 4px;"></div>
               <div style="position: absolute; left: 0; bottom: -2px; transform: translateX(-50%); width: 14px; height: 6px; background: #fbbf24; border: 1px solid #92400e; border-radius: 2px;"></div>
-              <!-- 드래그 안내 -->
               <div id="s-drag-hint" class="absolute font-cute font-bold text-xs text-white bg-amber-500 px-3 py-1 rounded-full shadow-lg whitespace-nowrap pointer-events-none transition-opacity duration-500"
-                   style="left: 0; bottom: 150px; transform: translateX(-50%);">
-                👆 패널을 좌·우로 드래그해서 햇빛에 맞춰주세요!
+                   style="left: 0; bottom: 160px; transform: translateX(-50%);">
+                👆 패널을 드래그해서 움직이는 태양을 따라가세요!
               </div>
             </div>
-
-            <!-- 전구 시스템 (오른쪽 75%) -->
+ 
+            <!-- 전구 시스템 -->
             <div class="absolute" style="left: 75%; bottom: 90px; z-index: 3;">
-              <!-- 전구 -->
               <div style="position: absolute; left: 0; bottom: 55px; transform: translateX(-50%);">
-                <div id="s-bulb" class="text-5xl transition-all duration-300" style="filter: drop-shadow(0 0 12px rgba(254,243,199,0.35)); line-height: 1;">💡</div>
+                <div id="s-bulb-halo" style="left: calc(50% - 27px); top: calc(50% - 27px);"></div>
+                <div id="s-bulb" class="text-6xl transition-all duration-300" style="filter: grayscale(1) brightness(0.5); line-height: 1; position: relative; z-index: 5;">💡</div>
               </div>
-              <!-- 전선이 전구 안으로 들어가는 모습: 기둥을 전선과 같은 검정으로 통일 -->
               <div style="position: absolute; left: -1.5px; bottom: 6px; transform: translateX(-50%); width: 4px; height: 55px; background: #0f172a; border-radius: 1px;"></div>
-              <!-- 받침 (전선과 연결되는 노란 단자 포함) -->
               <div style="position: absolute; left: 0; bottom: 0; transform: translateX(-50%); width: 54px; height: 7px; background: #334155; border-radius: 4px;"></div>
               <div style="position: absolute; left: 0; bottom: -2px; transform: translateX(-50%); width: 14px; height: 6px; background: #fbbf24; border: 1px solid #92400e; border-radius: 2px;"></div>
             </div>
-
-            <!-- 작동 설명 카드 (왼쪽 아래) -->
+ 
+            <!-- 작동 설명 카드 -->
             <div class="absolute bottom-2 left-2 p-3 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="width: 340px;">
               <div class="flex items-center gap-2 mb-1.5">
                 <div class="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center text-lg shadow border-2 border-white/30">📋</div>
                 <div class="font-title text-base">작동 설명</div>
               </div>
-              <p id="s-msg" class="text-sm font-cute leading-snug mb-2">[맑음] 햇빛이 가득! 패널을 햇빛 방향으로 드래그해서 돌려주세요.</p>
-              <div class="text-[10px] text-white/70 font-bold mb-1 font-title">에너지 흡수 효율 (수직 입사 = 100%)</div>
+              <p id="s-msg" class="text-sm font-cute leading-snug mb-2">태양은 하루 동안 하늘을 가로질러 이동해요. 패널을 태양과 마주보게 맞춰주세요!</p>
+              <div class="text-[10px] text-white/70 font-bold mb-1 font-title">에너지 흡수 효율 (태양과 수직일 때 100%)</div>
               <div class="flex items-center gap-2">
                 <div class="flex-1 h-2 bg-white/15 rounded-full overflow-hidden">
                   <div id="s-eff-bar" class="h-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-300" style="width: 100%;"></div>
@@ -604,36 +611,30 @@
               </div>
             </div>
           `;
-
-          // 패널 셀 생성 (8x2 = 16)
+ 
           const grid = document.getElementById('s-panel-grid');
           grid.style.width = '180px';
           let cellsHtml = '';
           for (let i = 0; i < 16; i++) {
-            cellsHtml += `<div class="aspect-square" style="background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #1e40af 100%); border: 1px solid #1e3a8a;"></div>`;
+            cellsHtml += `<div class="aspect-square panel-grid-cell"></div>`;
           }
           grid.innerHTML = cellsHtml;
-
+ 
           const weathers = {
-            sunny:  { particles: 6, watts: 280, msg: '[맑음] 햇빛이 가득! 패널을 햇빛 방향으로 드래그해서 돌려주세요.',           skyTop: '#38bdf8', skyBot: '#7dd3fc', sunOp: '1',    powerMul: 1.0 },
-            cloudy: { particles: 1, watts: 110, msg: '[구름] 구름이 햇빛을 가려요. 광자가 적게 와서 전기가 적게 만들어져요.',     skyTop: '#94a3b8', skyBot: '#cbd5e1', sunOp: '0.25', powerMul: 0.4 },
-            rainy:  { particles: 0, watts: 25,  msg: '[비] 비가 와서 햇빛이 거의 없어요. 전기를 거의 만들지 못해요.',           skyTop: '#475569', skyBot: '#64748b', sunOp: '0.05', powerMul: 0.1 },
+            sunny:  { particles: 6, watts: 350, msg: '[맑음] 햇빛이 강렬해요! ', powerMul: 1.0, skyTop: '#38bdf8', skyBot: '#7dd3fc', sunOp: '1' },
+            cloudy: { particles: 2, watts: 120, msg: '[구름] 구름이 빛을 가려요. ', powerMul: 0.4, skyTop: '#94a3b8', skyBot: '#cbd5e1', sunOp: '0.4' },
+            rainy:  { particles: 0, watts: 30,  msg: '[비] 햇빛이 거의 없어요. ', powerMul: 0.1, skyTop: '#475569', skyBot: '#64748b', sunOp: '0.1' },
           };
-
-          // 태양(중앙 위, left:50%, top:100)에서 패널(left:35%, 패널 중심 y≈360)로의 방향
-          // dx ≈ (0.50-0.35) * 920 ≈ 138, dy ≈ 100-360 ≈ -260
-          // 단위벡터: (0.469, -0.883)
-          // 패널 법선이 이 방향과 같을 때 최적 → atan2(dx, -dy) = atan2(0.469, 0.883) ≈ 28°
-          // (실제 arena 크기에 따라 살짝 다를 수 있어서 측정값에 맞춰 33°로 설정)
-          const SUN_DIR_X = 0.469;
-          const SUN_DIR_Y = -0.883;
-          const OPTIMAL_ANGLE = Math.atan2(SUN_DIR_X, -SUN_DIR_Y) * 180 / Math.PI; // ≈ 28°
-
+ 
           let weather = 'sunny';
           let currentWatts = 0;
-          let panelAngle = OPTIMAL_ANGLE;
+          let panelAngle = 0;
+          let dayProgress = 0.2; // 0 (dawn) to 1 (dusk)
+          let optimalAngle = 0;
+ 
           const sky = document.getElementById('s-sky');
           const sunWrap = document.getElementById('s-sun-wrap');
+          const sunTime = document.getElementById('s-time-label');
           const clouds = document.getElementById('s-clouds');
           const rainCloud = document.getElementById('s-rain-cloud');
           const particles = document.getElementById('s-particles');
@@ -642,45 +643,70 @@
           const effPct = document.getElementById('s-eff-pct');
           const msgEl = document.getElementById('s-msg');
           const bulb = document.getElementById('s-bulb');
+          const bulbHalo = document.getElementById('s-bulb-halo');
           const wireFlow = document.getElementById('s-wire-flow');
           const panelTilt = document.getElementById('s-panel-tilt');
           const dragHint  = document.getElementById('s-drag-hint');
-
-          // 실제 코사인 효율: 패널 법선과 태양 방향의 내적 (수직 입사 = 1.0, 평행 = 0)
+          const angleGuide = document.getElementById('s-angle-guide');
+ 
+          function updateSunPosition() {
+            // 태양 궤적 (반원)
+            const angleRad = dayProgress * Math.PI;
+            const sunX = 50 - 40 * Math.cos(angleRad); // 10% to 90%
+            const sunY = 50 - 35 * Math.sin(angleRad); // 15% to 50%
+            sunWrap.style.left = sunX + '%';
+            sunWrap.style.top  = sunY + '%';
+            
+            // 시간 표시
+            const hours = 6 + dayProgress * 12;
+            const h = Math.floor(hours);
+            const m = Math.floor((hours % 1) * 60);
+            sunTime.textContent = `${h < 12 ? '오전' : '오후'} ${String(h > 12 ? h-12 : h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+ 
+            // 최적 각도 계산: 패널(35%, 80%)에서 태양을 바라보는 각도
+            // 단순화를 위해 x 좌표 차이로 계산
+            const dx = (sunX - 35);
+            const dy = (sunY - 80);
+            optimalAngle = Math.atan2(dx, -dy) * 180 / Math.PI;
+          }
+ 
           function angleFactor() {
-            const rad = panelAngle * Math.PI / 180;
-            // CSS rotate(θ) 시 패널 법선 = (sin θ, -cos θ) (원래 (0,-1)에서 회전)
-            const nx = Math.sin(rad);
-            const ny = -Math.cos(rad);
-            const dot = nx * SUN_DIR_X + ny * SUN_DIR_Y;
-            // 음수면 0, 양수면 cos² 형태로 가파른 falloff (현실감 ↑)
-            if (dot <= 0) return 0;
-            return dot * dot;
+            const diff = Math.abs(panelAngle - optimalAngle);
+            const cos = Math.cos(diff * Math.PI / 180);
+            return Math.max(0, cos * cos); // cos^2 for sharper drop-off
           }
 
+          // 시간대 효율: 정오(dayProgress=0.5)에 최대 1, 아침·저녁에는 낮음
+          function timeOfDayFactor() {
+            const s = Math.sin(dayProgress * Math.PI);
+            return Math.pow(Math.max(0, s), 1.6);
+          }
+
+          // 종합 효율 (각도 × 날씨 × 시간대)
+          function effectiveFactor() {
+            return angleFactor() * weathers[weather].powerMul * timeOfDayFactor();
+          }
+ 
           function setPanelAngle(v) {
-            panelAngle = Math.max(-60, Math.min(80, v));
+            panelAngle = Math.max(-75, Math.min(75, v));
             panelTilt.style.transform = `translateX(-50%) rotate(${panelAngle}deg)`;
             refreshDisplay();
           }
-
-          // 드래그 회전 (좌우 드래그)
+ 
           let dragging = false, dragStartX = 0, dragStartAngle = 0;
           panelTilt.addEventListener('pointerdown', e => {
             dragging = true;
-            try { panelTilt.setPointerCapture(e.pointerId); } catch {}
+            panelTilt.setPointerCapture(e.pointerId);
             dragStartX = e.clientX;
             dragStartAngle = panelAngle;
             panelTilt.style.cursor = 'grabbing';
             panelTilt.style.transition = 'none';
             if (dragHint) dragHint.style.opacity = '0';
-            e.preventDefault();
           });
           panelTilt.addEventListener('pointermove', e => {
             if (!dragging) return;
             const dx = (e.clientX - dragStartX) / __scale;
-            // 오른쪽으로 드래그 → 시계방향 회전 (왼쪽이 더 올라감)
-            setPanelAngle(dragStartAngle + dx / 3);
+            setPanelAngle(dragStartAngle + dx / 2);
           });
           const endDrag = () => {
             dragging = false;
@@ -689,11 +715,7 @@
           };
           panelTilt.addEventListener('pointerup', endDrag);
           panelTilt.addEventListener('pointercancel', endDrag);
-          panelTilt.addEventListener('pointerleave', e => { if (dragging) endDrag(); });
-
-          // 드래그 안내 5초 뒤 자동 숨김
-          setTimeout(() => { if (dragHint) dragHint.style.opacity = '0'; }, 5000);
-
+ 
           function setWeather(w) {
             weather = w;
             document.querySelectorAll('.weather-tab').forEach(b => b.classList.toggle('active', b.dataset.w === w));
@@ -702,104 +724,144 @@
             sunWrap.style.opacity = cfg.sunOp;
             clouds.classList.toggle('hidden', w !== 'cloudy');
             rainCloud.classList.toggle('hidden', w !== 'rainy');
-            refreshDisplay();
           }
+ 
           function refreshDisplay() {
             const cfg = weathers[weather];
-            const factor = angleFactor() * cfg.powerMul;
+            const factor = effectiveFactor();
             const effPercent = Math.round(factor * 100);
             effBar.style.width = effPercent + '%';
             effPct.textContent = effPercent + '%';
-            // 메시지: 날씨 + 각도 힌트
-            const adiff = Math.abs(panelAngle - OPTIMAL_ANGLE);
-            let extra;
-            if (adiff < 5)       extra = ' ✨ 빛이 패널에 수직으로! 최대 발전!';
-            else if (adiff < 15) extra = ' 거의 다 왔어요!';
-            else if (adiff < 30) extra = ` 더 ${panelAngle < OPTIMAL_ANGLE ? '오른쪽' : '왼쪽'}으로 드래그해 보세요!`;
-            else                  extra = ' ⚠ 패널이 햇빛과 어긋났어요!';
+
+            const adiff = Math.abs(panelAngle - optimalAngle);
+            const tod = timeOfDayFactor();
+            let extra = '';
+            if (adiff < 8) {
+              if (tod > 0.75)      extra = ' ✨ 완벽해요! 한낮의 강한 빛을 가득 받아요!';
+              else if (tod > 0.35) extra = ' ✨ 각도는 좋아요. 해가 더 높아지면 발전량이 늘어요.';
+              else                 extra = ' ✨ 각도는 좋지만, 해가 낮아서 발전량이 적어요.';
+              angleGuide.style.opacity = '1';
+            } else {
+              extra = ` 패널을 더 ${panelAngle < optimalAngle ? '오른쪽' : '왼쪽'}으로 돌려보세요.`;
+              angleGuide.style.opacity = '0.3';
+            }
             msgEl.textContent = cfg.msg + extra;
           }
+ 
           document.querySelectorAll('.weather-tab').forEach(b => b.addEventListener('click', () => setWeather(b.dataset.w)));
-
-          // 입자 / 빗방울 생성 — 광자는 태양에서 패널 쪽으로 명확하게 떨어짐
+ 
           function spawn() {
             const cfg = weathers[weather];
             const arenaRect = arena.getBoundingClientRect();
             const arenaW = arenaRect.width / __scale;
             const arenaH = arenaRect.height / __scale;
-            // 태양 위치: left:50%, top:90 부근
-            const sunX = arenaW * 0.50;
-            const sunY = 120;
-            // 패널 중심 좌표 (left:35%, 패널은 기둥 위, 회전 중심 = bottom:150)
+            
+            const sunRect = sunWrap.getBoundingClientRect();
+            const sunX = (sunRect.left + sunRect.width/2 - arenaRect.left) / __scale;
+            const sunY = (sunRect.top + sunRect.height/2 - arenaRect.top) / __scale;
+            
             const panelX = arenaW * 0.35;
-            const panelY = arenaH - 175;
-
+            const panelY = arenaH - 150;
+ 
             if (weather === 'rainy') {
-              // 빗방울
-              for (let i = 0; i < 6; i++) {
+              for (let i = 0; i < 5; i++) {
                 const d = document.createElement('div');
                 d.className = 'raindrop';
-                d.style.left = (15 + Math.random() * 75) + '%';
-                d.style.top = '90px';
-                d.style.setProperty('--dx', (Math.random() * 6 - 3) + 'px');
-                d.style.animation = `rainFall ${0.7 + Math.random() * 0.5}s linear forwards`;
+                d.style.left = (Math.random() * 100) + '%';
+                d.style.top = '-20px';
+                d.style.setProperty('--dx', (Math.random() * 10 - 5) + 'px');
+                d.style.animation = `rainFall ${0.6 + Math.random() * 0.4}s linear forwards`;
                 particles.appendChild(d);
-                setTimeout(() => d.remove(), 1200);
+                setTimeout(() => d.remove(), 1000);
               }
             }
-            // 햇빛 알갱이: 모두 태양 위치에서 출발 → 패널 쪽으로 직선 이동 (명확히 보임)
+ 
             for (let i = 0; i < cfg.particles; i++) {
-              if (Math.random() > 0.7) continue;
+              if (Math.random() > 0.6) continue;
               const p = document.createElement('div');
               p.className = 'photon';
-              const startPx = sunX + (Math.random() * 24 - 12);
-              const startPy = sunY + (Math.random() * 20 - 10);
-              p.style.left = startPx + 'px';
-              p.style.top = startPy + 'px';
-              const dx = (panelX + (Math.random() * 140 - 70)) - startPx;
-              const dy = (panelY + (Math.random() * 30 - 15)) - startPy;
+              p.style.left = sunX + 'px';
+              p.style.top = sunY + 'px';
+              
+              const dx = (panelX + (Math.random() * 120 - 60)) - sunX;
+              const dy = (panelY + (Math.random() * 40 - 20)) - sunY;
               p.style.setProperty('--dx', dx + 'px');
               p.style.setProperty('--dy', dy + 'px');
-              p.style.animation = `photonFall ${1.0 + Math.random() * 0.3}s linear forwards`;
+              p.style.animation = `photonFall ${0.8 + Math.random() * 0.4}s linear forwards`;
               particles.appendChild(p);
-              // 광자가 패널에 도달하면: 패널 셀 한 군데 반짝 (효율에 따라)
+ 
               setTimeout(() => {
-                const cells = grid.children;
-                if (cells.length > 0 && angleFactor() > 0.3) {
+                // 광자가 패널에 닿으면 전기로 변함 (차지 입자 생성)
+                if (angleFactor() > 0.1) {
+                  const c = document.createElement('div');
+                  c.className = 'charge';
+                  c.style.left = (panelX + (Math.random() * 20 - 10)) + 'px';
+                  c.style.top = (panelY + (Math.random() * 10 - 5)) + 'px';
+                  
+                  const targetX = arenaW * 0.75;
+                  const targetY = panelY;
+                  c.style.setProperty('--tx', (targetX - panelX) + 'px');
+                  c.style.setProperty('--ty', '0px');
+                  c.style.animation = `chargeFlow 0.5s ease-in forwards`;
+                  particles.appendChild(c);
+                  setTimeout(() => c.remove(), 550);
+                  
+                  // 패널 셀 반짝임
+                  const cells = grid.children;
                   const idx = Math.floor(Math.random() * cells.length);
-                  const c = cells[idx];
-                  c.style.boxShadow = 'inset 0 0 12px 3px rgba(254,243,199,0.95)';
-                  setTimeout(() => { c.style.boxShadow = ''; }, 300);
+                  cells[idx].style.filter = 'brightness(2) white';
+                  cells[idx].style.boxShadow = '0 0 10px #fde047';
+                  setTimeout(() => { cells[idx].style.filter = ''; cells[idx].style.boxShadow = ''; }, 200);
                 }
                 p.remove();
-              }, 1050);
+              }, 800);
             }
           }
-
-          setPanelAngle(OPTIMAL_ANGLE);
+ 
+          updateSunPosition();
           setWeather('sunny');
-
+ 
           loopId = setInterval(() => {
-            const cfg = weathers[weather];
-            const factor = angleFactor() * cfg.powerMul;
-            // Watts (실제 코사인 효율 + 날씨)
-            const target = (cfg.watts * factor) + (Math.random() * 16 - 8);
-            currentWatts += (target - currentWatts) * 0.18;
-            wattsEl.textContent = Math.max(0, currentWatts).toFixed(1);
-            // 전구 밝기 (전류에 비례)
-            const glow = 4 + (currentWatts / 280) * 55;
-            bulb.style.filter = `drop-shadow(0 0 ${glow}px rgba(254,243,199,${Math.min(0.95, 0.2 + currentWatts/350)}))`;
-            // 전선 전류 흐름
-            wireFlow.style.opacity = currentWatts > 30 ? '0.95' : '0';
-            // 광자 + 빗방울
-            spawn();
-            // 에너지 누적 (느리게 — 학생이 조정해볼 시간 충분히)
-            addEnergy(factor * 1.3);
-          }, 100);
+            // 시간 흐름 (자동 태양 이동)
+            dayProgress += 0.001;
+            if (dayProgress > 0.9) dayProgress = 0.1; // 루프
+            updateSunPosition();
+            refreshDisplay();
 
+            const cfg = weathers[weather];
+            const factor = effectiveFactor();
+            const target = (cfg.watts * factor);
+            currentWatts += (target - currentWatts) * 0.1;
+            wattsEl.textContent = Math.max(0, currentWatts).toFixed(1);
+
+            // 전구 시각 효과: 효율(factor)에 따라 크기·세기 차등
+            if (currentWatts > 8 && factor > 0.05) {
+              const intensity = Math.min(1, currentWatts / 300);
+              const glow = Math.max(intensity, factor); // 효율이 직접 반영되도록
+              const haloSize = 70 + glow * 95;          // 70px ~ 165px
+              bulb.style.filter = `grayscale(0) brightness(${1 + glow * 1.1}) drop-shadow(0 0 ${8 + glow * 55}px rgba(254,243,199,0.95))`;
+              bulbHalo.style.opacity = (0.25 + glow * 0.75).toFixed(2);
+              bulbHalo.style.width  = haloSize + 'px';
+              bulbHalo.style.height = haloSize + 'px';
+              wireFlow.style.opacity = (0.4 + glow * 0.6).toFixed(2);
+              wireFlow.style.animationDuration = (1.2 - glow * 0.9) + 's';
+            } else {
+              bulb.style.filter = 'grayscale(1) brightness(0.5)';
+              bulbHalo.style.opacity = '0';
+              bulbHalo.style.width  = '70px';
+              bulbHalo.style.height = '70px';
+              wireFlow.style.opacity = '0';
+            }
+
+            spawn();
+            // 효율 제곱 곡선 + 낮은 베이스 → 효율 낮을 땐 거의 안 차고, 높을 때만 빨리 참
+            addEnergy(factor * factor * 1.3);
+          }, 100);
+ 
           cleanupFn = () => clearInterval(loopId);
         }
       },
+
 
       /* 💨 풍력 — 바람선 + 다중 터빈 + 속도계 */
       wind: {
@@ -807,8 +869,13 @@
           const arena = document.getElementById('plant-arena');
           arena.innerHTML = `
             <style>
-              @keyframes windFlow { 0%{ transform: translateX(-120px); opacity:0;} 10%{opacity:0.8;} 90%{opacity:0.8;} 100%{ transform: translateX(900px); opacity: 0;} }
+              @keyframes windFlow { 0%{ transform: translateX(-120px); opacity:0;} 10%{opacity:var(--op, 0.8);} 90%{opacity:var(--op, 0.8);} 100%{ transform: translateX(900px); opacity: 0;} }
               .wind-line { position: absolute; height: 3px; border-radius: 2px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.9), transparent); pointer-events: none; }
+              /* 풍력 블레이드: transform은 빠르게, blur(filter)는 부드럽게 */
+              #w-blades, #w-blades-2, #w-blades-3 { transition: transform 0.1s linear, filter 0.35s ease-out !important; will-change: transform, filter; }
+              /* 허브 글로우 펄스 */
+              @keyframes hubGlowPulse { 0%,100% { transform: translate(-50%, -50%) scale(0.95); } 50% { transform: translate(-50%, -50%) scale(1.08); } }
+              #w-hub-glow { animation: hubGlowPulse 1.4s ease-in-out infinite; }
             </style>
             <div class="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-300"></div>
             <!-- 구름 -->
@@ -830,6 +897,12 @@
 
             <!-- 중앙 큰 터빈 (실제 풍력 발전기 비례) -->
             <div class="absolute" style="left: 50%; bottom: 80px; transform: translateX(-50%);">
+              <!-- 허브 글로우 (블레이드 뒤) -->
+              <div id="w-hub-glow" class="absolute pointer-events-none"
+                   style="left: 50%; top: -2px; width: 160px; height: 160px;
+                          background: radial-gradient(circle, rgba(125,211,252,0.85), rgba(56,189,248,0.35) 50%, transparent 75%);
+                          border-radius: 9999px; opacity: 0; filter: blur(6px);
+                          transition: opacity 0.3s;"></div>
               <!-- 타워: 위로 갈수록 좁아지는 사다리꼴 -->
               <svg width="40" height="220" viewBox="0 0 40 220" style="display:block;">
                 <polygon points="14,0 26,0 32,220 8,220" fill="url(#wtower)" stroke="#475569" stroke-width="1"/>
@@ -967,15 +1040,50 @@
             }, BREATH_MS);
           });
           const msg = document.getElementById('w-msg');
+          const hubGlow = document.getElementById('w-hub-glow');
           let lastMsgKey = '';
           loopId = setInterval(() => {
-            speed = Math.max(0, speed - 2);
+            // 감속을 더 부드럽게 (2 → 1.2) — 바람이 멈춰도 천천히 잦아드는 모습
+            speed = Math.max(0, speed - 1.2);
+
+            // 회전 각도
             angle  = (angle  + speed * 0.5) % 360;
             angle2 = (angle2 + speed * 0.7) % 360;
             angle3 = (angle3 + speed * 0.9) % 360;
+
+            // 0~1 정규화 (max 150 기준)
+            const sNorm = Math.min(1, speed / 130);
+            // 속도에 따른 모션 블러 — 빠르면 흐릿하게 (회전이 사라지는 듯한 느낌)
+            const blurPx = sNorm * 2.2;
             blades.style.transform  = `translateX(-50%) rotate(${angle}deg)`;
             blades2.style.transform = `translateX(-50%) rotate(${angle2}deg)`;
             blades3.style.transform = `translateX(-50%) rotate(${angle3}deg)`;
+            blades.style.filter  = `blur(${blurPx.toFixed(2)}px)`;
+            blades2.style.filter = `blur(${(blurPx * 0.75).toFixed(2)}px)`;
+            blades3.style.filter = `blur(${(blurPx * 0.65).toFixed(2)}px)`;
+
+            // 허브 글로우 (속도 따라 진하게)
+            hubGlow.style.opacity = (sNorm * 0.85).toFixed(2);
+
+            // 연속 바람선 — 속도가 살아 있는 동안 계속 흐름
+            if (speed > 5) {
+              const tries = sNorm > 0.6 ? 2 : 1;
+              for (let i = 0; i < tries; i++) {
+                if (Math.random() < 0.35 + sNorm * 0.55) {
+                  const line = document.createElement('div');
+                  line.className = 'wind-line';
+                  line.style.top = (60 + Math.random() * 280) + 'px';
+                  line.style.left = '0';
+                  line.style.width = (40 + Math.random() * 80 + sNorm * 40) + 'px';
+                  const dur = (1.2 - sNorm * 0.6 + Math.random() * 0.3);
+                  line.style.animation = `windFlow ${dur.toFixed(2)}s linear forwards`;
+                  line.style.setProperty('--op', (0.35 + sNorm * 0.55).toFixed(2));
+                  currents.appendChild(line);
+                  setTimeout(() => line.remove(), 2500);
+                }
+              }
+            }
+
             const pct = Math.min(100, Math.round(speed / 1.5));
             speedBar.style.width = pct + '%';
             speedPct.textContent = pct + '%';

@@ -84,6 +84,27 @@
       pointer-events: none;
       animation: floatUp 0.9s ease-out forwards;
     }
+
+    /* 바람 입자 — 마이크 음량/불기 입력에 따라 좌→우로 흘러감 */
+    @keyframes windGust {
+      0%   { transform: translate(-180px, 0) scaleX(0.5); opacity: 0; }
+      15%  { opacity: var(--op, 0.85); }
+      100% { transform: translate(1400px, var(--wy, 0px)) scaleX(1.1); opacity: 0; }
+    }
+    .wind-wisp {
+      position: absolute; left: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(to right, transparent, rgba(186,230,253,0.95), transparent);
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    /* 마이크 인디케이터 강한 펄스 */
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(217,70,239,0.0); }
+      50%      { box-shadow: 0 0 0 10px rgba(217,70,239,0.0); }
+    }
+    #mic-indicator.live { animation: micPulse 1.2s ease-in-out infinite; }
   </style>
 </head>
 <body>
@@ -219,7 +240,7 @@
 
             <div id="flame-wrap"
                  class="absolute left-1/2 origin-bottom anim-flicker cursor-pointer select-none"
-                 style="bottom: 80px; transform: translateX(-50%) scale(0.6); transition: transform 0.18s ease-out;"
+                 style="bottom: 80px; transform: translateX(-50%) scale(0.6); transition: transform 0.08s linear;"
                  title="여기를 두드려도 불을 살릴 수 있어요!">
               <svg viewBox="0 0 100 150" width="160" height="240">
                 <defs>
@@ -255,6 +276,8 @@
             <!-- 효과 레이어 -->
             <div id="sparks" class="absolute left-1/2 -translate-x-1/2 w-0 h-0" style="bottom: 100px;"></div>
             <div id="floats" class="absolute left-1/2 -translate-x-1/2 w-0 h-0" style="bottom: 170px;"></div>
+            <!-- 바람 입자 레이어 (모닥불 무대 전체 가로 폭) -->
+            <div id="wind-layer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
           </div>
         </div>
 
@@ -403,17 +426,57 @@
         woodDots.appendChild(dot);
       }
     }
+    /* ===== 시각 바람 상태 (연속 변수) =====
+     * windLevel(0~1): 마이크 음량/버튼 누름에 따라 즉시 올라가고 천천히 감소.
+     * renderFlame은 게이지·경고만 담당, 화염/glow 변환은 windVisualLoop에서 60fps로. */
+    let windLevel = 0;
+    function pumpWind(v) {
+      windLevel = Math.min(1, Math.max(windLevel, v));
+    }
     function renderFlame() {
       const ratio = Math.max(0, Math.min(1, flame / FLAME_MAX));
-      const scale = 0.25 + ratio * 1.10;
-      flameWrap.style.transform = `translateX(-50%) scale(${scale.toFixed(3)})`;
-      glow.style.transform = `translateX(-50%) scale(${(0.4 + ratio * 0.9).toFixed(3)})`;
-      glow.style.opacity   = (0.3 + ratio * 0.7).toFixed(2);
       flameBar.style.width = (ratio * 100).toFixed(0) + '%';
       flamePct.textContent = Math.round(ratio * 100) + '%';
       if (flame < 25 && !ended) { hint.classList.remove('hidden'); stageArea.classList.add('warn'); }
       else                       { hint.classList.add('hidden');    stageArea.classList.remove('warn'); }
     }
+
+    /* 60fps 시각 루프 — 화염 크기·glow·바람 입자를 windLevel에 따라 부드럽게 갱신 */
+    const windLayer = document.getElementById('wind-layer');
+    let windWispTick = 0;
+    function windVisualLoop() {
+      // 자연 감쇠 — 바람을 안 불면 서서히 사라짐
+      windLevel *= 0.93;
+      if (windLevel < 0.002) windLevel = 0;
+
+      const ratio = Math.max(0, Math.min(1, flame / FLAME_MAX));
+      const baseScale  = 0.25 + ratio * 1.10;
+      const windScale  = baseScale * (1 + windLevel * 0.35);
+      flameWrap.style.transform = `translateX(-50%) scale(${windScale.toFixed(3)})`;
+      glow.style.transform = `translateX(-50%) scale(${(0.4 + ratio * 0.9 + windLevel * 0.35).toFixed(3)})`;
+      glow.style.opacity   = (0.3 + ratio * 0.7 + windLevel * 0.35).toFixed(2);
+
+      // 바람 입자 생성 — windLevel이 클수록 자주, 진하게
+      if (windLevel > 0.12 && windLayer) {
+        windWispTick++;
+        const interval = Math.max(2, 9 - Math.floor(windLevel * 9));
+        if (windWispTick >= interval) {
+          windWispTick = 0;
+          const w = document.createElement('div');
+          w.className = 'wind-wisp';
+          w.style.top    = (60 + Math.random() * 320) + 'px';
+          w.style.width  = (50 + Math.random() * 70 + windLevel * 40) + 'px';
+          w.style.setProperty('--op', (0.4 + windLevel * 0.6).toFixed(2));
+          w.style.setProperty('--wy', (Math.random() * 30 - 15) + 'px');
+          const dur = (0.55 - windLevel * 0.25 + Math.random() * 0.15);
+          w.style.animation = `windGust ${dur.toFixed(2)}s linear forwards`;
+          windLayer.appendChild(w);
+          setTimeout(() => w.remove(), 900);
+        }
+      }
+      requestAnimationFrame(windVisualLoop);
+    }
+    requestAnimationFrame(windVisualLoop);
     function renderTimer() {
       const sec = Math.floor(elapsedMs / 1000);
       const m = String(Math.floor(sec / 60)).padStart(2, '0');
@@ -460,7 +523,9 @@
       if (!canBlow()) return;     // 아직 숨을 들이쉬는 중
       lastBlowAt = Date.now();
       flame = Math.min(FLAME_MAX, flame + gain);
-      spawnSparks(2);
+      // 시각 바람 효과 (마이크 없이 버튼으로 분 경우에도 바람이 부는 느낌)
+      pumpWind(Math.min(1, 0.45 + gain / 18));
+      spawnSparks(2 + Math.round(windLevel * 5));
       floatText('+' + Math.round(gain), '#7dd3fc');
       renderFlame();
       // 버튼에 숨쉬기 게이지 표시
@@ -530,7 +595,9 @@
         analyser.fftSize = 512;
         src.connect(analyser);
         const data = new Uint8Array(analyser.frequencyBinCount);
-        document.getElementById('mic-indicator').classList.remove('hidden');
+        const indEl = document.getElementById('mic-indicator');
+        indEl.classList.remove('hidden');
+        indEl.classList.add('live');
         let lastBlow = 0;
         function loop() {
           if (!micEnabled) return;
@@ -538,8 +605,10 @@
           let sum = 0, cnt = 0;
           for (let i = 40; i < data.length; i++) { sum += data[i]; cnt++; }
           const avg = sum / cnt;
-          const ind = document.getElementById('mic-indicator');
-          ind.style.transform = `scale(${1 + Math.min(0.6, avg / 80)})`;
+          indEl.style.transform = `scale(${1 + Math.min(0.6, avg / 80)})`;
+          // 연속 시각 반응: 음량을 0~1로 정규화해서 windLevel에 펌프
+          const wind = Math.min(1, Math.max(0, (avg - 18) / 70));
+          if (wind > 0.02) pumpWind(wind);
           if (avg > 35 && Date.now() - lastBlow > 180 && started && !ended) {
             lastBlow = Date.now();
             blow(Math.min(10, 3 + avg / 18));
@@ -556,7 +625,9 @@
     function stopMic() {
       micEnabled = false;
       if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-      document.getElementById('mic-indicator').classList.add('hidden');
+      const indEl = document.getElementById('mic-indicator');
+      indEl.classList.add('hidden');
+      indEl.classList.remove('live');
     }
 
     /* ===== 이벤트 ===== */

@@ -3,24 +3,53 @@
  * 모든 페이지(index, lesson1~7)에서 공유합니다.
  * 학생 정보·진행 기록·통계는 Google 스프레드시트와 연동됩니다.
  *
- * 설정 방법은 Code.gs 파일을 참고하세요.
+ * ─────────────────────────────────────────────
+ * 📌 다른 선생님께서 사용하실 때 — config.js 손댈 필요 없어요!
+ *
+ *    선생님은 본인 시트의 [선생님 설정 안내] 시트를 보고 "우리 반 전용 링크"를 만듭니다.
+ *    예) https://○○○.github.io/?api=https://script.google.com/macros/.../exec
+ *
+ *    학생이 그 긴 링크로 한 번 들어오면, 그 컴퓨터·브라우저는 우리 반 시트를
+ *    자동으로 기억합니다. 다음부터는 짧은 사이트 주소로만 들어와도 우리 반 시트로 기록돼요.
+ *    (자세한 안내는 사본 스프레드시트의 첫 번째 탭 참고)
+ * ─────────────────────────────────────────────
  */
 
 window.APP_CONFIG = {
-  // ⬇️⬇️⬇️  여기에 본인의 Google Apps Script 웹앱 URL을 붙여넣으세요  ⬇️⬇️⬇️
-  //
-  //   1) Google Drive에서 새 스프레드시트 만들기
-  //   2) 첫 시트 이름을 "학생명단"으로 바꾸고:
-  //        A1 = 번호,  B1 = 이름    (헤더)
-  //        A2~ = 1, 2, 3, ...     B2~ = 학생 이름들
-  //   3) 확장 프로그램 > Apps Script 열기
-  //   4) Code.gs 내용을 통째로 붙여넣고 SHEET_ID 채우기
-  //   5) 배포 > 새 배포 > 웹 앱  (액세스: 모든 사용자) → URL 복사
-  //   6) 아래 따옴표 사이에 그 URL을 붙여넣기
-  //
-  //   비워두면 자동으로 오프라인 모드(브라우저 LocalStorage만)로 동작합니다.
-  API_URL: 'https://script.google.com/macros/s/AKfycbwBjQR6qVTInT1Sh9k8OeUuWB0qRAEA6p-cNIcEyaqmORqY02xPe8GyjfTZtTt67o0D/exec'
+  // 제(만든이)의 기본 URL — 다른 선생님이 ?api=... 링크로 따로 연결 안 하면 이 시트로 데이터가 가요.
+  API_URL_DEFAULT: 'https://script.google.com/macros/s/AKfycbwBjQR6qVTInT1Sh9k8OeUuWB0qRAEA6p-cNIcEyaqmORqY02xPe8GyjfTZtTt67o0D/exec',
+
+  // ?api=... 로 한 번 들어온 URL을 저장해 두는 브라우저 저장소 키
+  STORAGE_KEY: 'teacher-api-url'
 };
+
+/* API_URL 은 동적으로 결정됩니다.
+ *  우선순위:  ① 주소창 ?api=...  →  ② 브라우저에 저장된 선생님 URL  →  ③ 기본 URL
+ *  (이렇게 해 두면 기존 코드의 window.APP_CONFIG.API_URL 호출이 그대로 작동해요)
+ */
+Object.defineProperty(window.APP_CONFIG, 'API_URL', {
+  get() {
+    // ① 주소 뒤에 ?api=... 가 붙어 있으면 그걸 자동 저장
+    try {
+      const fromParam = new URLSearchParams(location.search).get('api');
+      if (fromParam) {
+        const u = decodeURIComponent(fromParam).trim();
+        if (u) {
+          localStorage.setItem(window.APP_CONFIG.STORAGE_KEY, u);
+          return u;
+        }
+      }
+    } catch (e) { /* 무시 */ }
+    // ② 브라우저에 저장된 선생님 URL
+    const fromStorage = (function () {
+      try { return localStorage.getItem(window.APP_CONFIG.STORAGE_KEY); }
+      catch (e) { return null; }
+    })();
+    if (fromStorage) return fromStorage;
+    // ③ 기본 URL (제 스프레드시트)
+    return window.APP_CONFIG.API_URL_DEFAULT || '';
+  }
+});
 
 window.appHelpers = {
   /* ===== 현재 학생 (세션 저장소 사용 — 브라우저 탭 닫으면 자동 로그아웃) ===== */

@@ -27,7 +27,7 @@
     <button class="stats-tab active"   data-tab="overview">🌍 전체 요약</button>
     <button class="stats-tab inactive" data-tab="missions">🎯 미션별</button>
     <button class="stats-tab inactive" data-tab="students">🧑‍🎓 학생별</button>
-    <button class="stats-tab inactive" data-tab="quiz">🏆 골든벨 점수</button>
+    <button class="stats-tab inactive" data-tab="village">🏘️ 에너지 마을 갤러리</button>
   </div>
 
   <!-- 본문 -->
@@ -43,7 +43,7 @@
       4: { emoji: '🌱', title: '100년 후 지구',        lesson: '5차시',     color: 'from-emerald-400 to-green-600' },
       5: { emoji: '💡', title: '우리집 에너지 진단',    lesson: '6~7차시',   color: 'from-sky-400 to-blue-500' },
       6: { emoji: '🏠', title: '효율적 집 만들기',      lesson: '8~9차시',   color: 'from-indigo-400 to-purple-500' },
-      7: { emoji: '🏆', title: '미래 전문가 & 골든벨',  lesson: '10~11차시', color: 'from-pink-400 to-rose-500' },
+      7: { emoji: '🏘️', title: '내가 만드는 에너지 마을',  lesson: '10~11차시', color: 'from-pink-400 to-rose-500' },
     };
 
     let stats = null;
@@ -81,7 +81,7 @@
       if (currentTab === 'overview')      content.innerHTML = renderOverview();
       else if (currentTab === 'missions') content.innerHTML = renderMissions();
       else if (currentTab === 'students') content.innerHTML = renderStudents();
-      else if (currentTab === 'quiz')     content.innerHTML = renderQuiz();
+      else if (currentTab === 'village')  content.innerHTML = renderVillage();
     }
 
     function renderOverview() {
@@ -92,10 +92,7 @@
         totalCompletions += s.completed.length;
       });
       const avgPct = total > 0 ? Math.round(totalCompletions / (total * 7) * 100) : 0;
-      const quizArr = stats.quizScores || [];
-      const avgQuiz = quizArr.length > 0
-        ? (quizArr.reduce((a,b) => a + b.score, 0) / quizArr.length).toFixed(1)
-        : '-';
+      const village = stats.village || { totalWorks: 0, totalComments: 0 };
       return `
         <div class="grid grid-cols-4 gap-4">
           <div class="bg-white rounded-2xl p-5 shadow border-2 border-violet-200 flex flex-col items-center justify-center">
@@ -114,10 +111,11 @@
             <div class="text-sm text-slate-500 font-bold">평균 진행률</div>
             <div class="text-4xl font-extrabold text-sky-700 tabular-nums">${avgPct}<span class="text-2xl">%</span></div>
           </div>
-          <div class="bg-white rounded-2xl p-5 shadow border-2 border-amber-200 flex flex-col items-center justify-center">
-            <div class="text-4xl mb-2">⭐</div>
-            <div class="text-sm text-slate-500 font-bold">골든벨 평균</div>
-            <div class="text-4xl font-extrabold text-amber-700 tabular-nums">${avgQuiz}<span class="text-2xl">${avgQuiz==='-'?'':'/8'}</span></div>
+          <div class="bg-white rounded-2xl p-5 shadow border-2 border-pink-200 flex flex-col items-center justify-center">
+            <div class="text-4xl mb-2">🏘️</div>
+            <div class="text-sm text-slate-500 font-bold">에너지 마을 작품</div>
+            <div class="text-4xl font-extrabold text-pink-700 tabular-nums">${village.totalWorks}</div>
+            <div class="text-xs text-slate-500 mt-0.5">💬 댓글 ${village.totalComments}개</div>
           </div>
         </div>
       `;
@@ -192,53 +190,32 @@
       `;
     }
 
-    function renderQuiz() {
-      const scores = stats.quizScores || [];
-      if (scores.length === 0) return '<div class="text-center text-slate-400 py-12">아직 골든벨 결과가 없어요</div>';
-      const buckets = [0,0,0,0,0,0,0,0,0];
-      scores.forEach(s => { const v = Math.round(s.score); if (v >= 0 && v <= 8) buckets[v]++; });
-      const max = Math.max(...buckets, 1);
-      const avg = (scores.reduce((a,b) => a + b.score, 0) / scores.length).toFixed(2);
-      const distribution = buckets.map((c, i) => {
-        const h = Math.round(c / max * 100);
-        const color = i >= 7 ? 'from-emerald-400 to-emerald-600'
-                    : i >= 5 ? 'from-amber-400 to-amber-600'
-                    : i >= 3 ? 'from-orange-400 to-orange-600'
-                             : 'from-rose-400 to-rose-600';
+    function renderVillage() {
+      const village = stats.village || { totalWorks: 0, totalComments: 0, works: [] };
+      const works = village.works || [];
+      if (works.length === 0) return '<div class="text-center text-slate-400 py-12">🏘️ 아직 올라온 에너지 마을 작품이 없어요</div>';
+      const cards = works.map(w => {
+        let title = '제목 없음';
+        try { const o = JSON.parse(w.description || '{}'); if (o && o.title) title = o.title; } catch (e) {}
+        const safeTitle = String(title).replace(/</g,'&lt;');
+        const safeName  = String(w.student || '').replace(/</g,'&lt;');
         return `
-          <div class="flex-1 flex flex-col items-center gap-2" style="min-height: 200px;">
-            <div class="text-xs font-bold text-slate-600 tabular-nums">${c}명</div>
-            <div class="w-full flex-1 flex items-end">
-              <div class="w-full rounded-t-xl bg-gradient-to-t ${color}" style="height: ${h}%; min-height: 4px;"></div>
+          <a href="${w.url}" target="_blank" class="block bg-white rounded-2xl overflow-hidden shadow border border-slate-200 hover:shadow-lg hover:-translate-y-0.5 transition">
+            <div class="bg-slate-100 flex items-center justify-center" style="height: 120px;">
+              <img src="${w.url}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="" loading="lazy">
             </div>
-            <div class="text-sm font-extrabold text-slate-700 tabular-nums">${i}점</div>
-          </div>
-        `;
+            <div class="p-2.5">
+              <div class="text-sm font-extrabold text-slate-900 truncate">${safeTitle}</div>
+              <div class="text-xs text-slate-500 mt-0.5">👤 ${safeName} · v${w.version || 1}</div>
+            </div>
+          </a>`;
       }).join('');
-      const top = scores.slice().sort((a,b) => b.score - a.score).slice(0, 10);
-      const topList = top.map((s, i) => `
-        <div class="flex items-center justify-between px-3 py-2 rounded-xl ${i === 0 ? 'bg-amber-50 border border-amber-200' : i < 3 ? 'bg-slate-50' : ''}">
-          <div class="flex items-center gap-2">
-            <span class="text-base font-extrabold text-slate-500 tabular-nums w-6">${i + 1}.</span>
-            <span class="font-bold text-slate-800">${s.student}</span>
-          </div>
-          <span class="font-extrabold text-amber-700 tabular-nums">${s.score}<span class="text-xs text-slate-500">/8</span></span>
-        </div>
-      `).join('');
       return `
-        <div class="grid grid-cols-3 gap-4">
-          <div class="col-span-2 bg-white rounded-2xl p-5 shadow">
-            <div class="flex items-baseline justify-between mb-2">
-              <h3 class="text-lg font-extrabold text-slate-900">점수 분포</h3>
-              <div class="text-sm text-slate-500">평균 <b class="text-amber-700 text-base">${avg}</b> / 8</div>
-            </div>
-            <div class="flex items-stretch gap-2 py-3 border-b border-slate-100">${distribution}</div>
-          </div>
-          <div class="bg-white rounded-2xl p-5 shadow">
-            <h3 class="text-lg font-extrabold text-slate-900 mb-3">🏅 TOP 10</h3>
-            <div class="space-y-1.5 text-sm">${topList}</div>
-          </div>
+        <div class="mb-3 flex items-baseline justify-between">
+          <h3 class="text-lg font-extrabold text-slate-900">🏘️ 에너지 마을 작품 (${works.length})</h3>
+          <div class="text-sm text-slate-500">💬 댓글 합계 <b class="text-violet-700">${village.totalComments}</b>개</div>
         </div>
+        <div class="grid grid-cols-4 gap-3">${cards}</div>
       `;
     }
 
