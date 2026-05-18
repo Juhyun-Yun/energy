@@ -13,7 +13,7 @@
   <style>
     :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #064e3b; color: #0f172a; touch-action: none; }
+    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #064e3b; color: #0f172a; touch-action: none; word-break: keep-all; overflow-wrap: break-word; }
     #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
     #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
 
@@ -242,13 +242,22 @@
               </div>
             </div>
 
-            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 flex-1">
-              <div class="text-2xl font-title text-violet-800 mb-4">💭 생각해 봐요</div>
-              <ul class="space-y-4 text-2xl text-slate-800 font-cute leading-snug">
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">1.</span> 나의 어떤 행동이 지구를 가장 많이 도왔을까요?</li>
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">2.</span> 우리 가족에게 권하고 싶은 <b>지속가능한 선택</b>은 무엇인가요?</li>
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">3.</span> 100년 후 우리 후손들에게 어떤 지구를 물려주고 싶나요?</li>
-              </ul>
+            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-4 flex-1 overflow-y-auto">
+              <div class="text-xl font-title text-violet-800 mb-3">💭 생각해 봐요</div>
+              <div class="space-y-3 font-cute text-slate-800">
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">1.</span><span>나의 어떤 행동이 지구를 가장 많이 도왔을까요?</span></div>
+                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">2.</span><span>우리 가족에게 권하고 싶은 <b>지속가능한 선택</b>은 무엇인가요?</span></div>
+                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">3.</span><span>100년 후 우리 후손들에게 어떤 지구를 물려주고 싶나요?</span></div>
+                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+              </div>
             </div>
 
             <div class="flex gap-3">
@@ -288,7 +297,7 @@
       {
         q: '🚗 학교에 어떻게 갈까요?',
         a: { emoji: '🚗', label: '자가용 타기',           desc: '빠르고 편하지만 매연이 나와요',  delta: -15, note: '자동차는 화석연료(석유)를 태워서 공기를 더럽혀요. 가까운 거리는 자전거나 걸어가는 게 좋아요!' },
-        b: { emoji: '🚲', label: '자전거나 대중교통',     desc: '오염이 적고 운동도 돼요',          delta: 12,  note: '한 사람이 1년 동안 자전거를 타면 자동차 한 달치 매연을 줄일 수 있어요! 🦺 안전모를 꼭 쓰고, 🚧 자전거 전용도로에서 타요. 도로에서는 어른과 함께!' },
+        b: { emoji: '🚲', label: '자전거나 대중교통',     desc: '오염이 적고 운동도 돼요',          delta: 12,  note: '한 사람이 1년 동안 자전거를 타면 자동차 한 달치 매연을 줄일 수 있어요! ⛑️ 안전모(헬멧)를 꼭 쓰고, 🚴 자전거 전용도로에서 타요. 도로에서는 어른과 함께!' },
       },
       {
         q: '🏠 더운 여름, 어떻게 시원하게 지낼까요?',
@@ -298,7 +307,7 @@
       {
         q: '💡 방을 나갈 때, 전등은?',
         a: { emoji: '💡', label: '그냥 켜둔 채로',         desc: '잠깐 다녀올 거라서',               delta: -10, note: '아무도 없는 방의 불을 켜둔 시간만큼 전기와 자원이 낭비돼요. 작은 습관이 큰 차이를 만들어요!' },
-        b: { emoji: '🔌', label: '스위치를 꼭 끄기',       desc: '잠깐만 시간 들여서',               delta: 12,  note: '대한민국의 모든 가정이 사용하지 않는 전등만 꺼도, 발전소 하나를 줄일 수 있다고 해요!' },
+        b: { emoji: '<svg viewBox="0 0 56 72" width="60" height="60" style="display:inline-block; vertical-align: middle;"><rect x="4" y="3" width="48" height="66" rx="6" fill="#fafaf9" stroke="#78716c" stroke-width="2.5"/><rect x="14" y="12" width="28" height="48" rx="3" fill="#e7e5e4" stroke="#a8a29e" stroke-width="1.5"/><rect x="20" y="32" width="16" height="22" rx="2" fill="#94a3b8" stroke="#334155" stroke-width="2"/><text x="28" y="26" font-size="9" font-weight="900" text-anchor="middle" fill="#334155" font-family="sans-serif">OFF</text></svg>', label: '스위치를 꼭 끄기',       desc: '잠깐만 시간 들여서',               delta: 12,  note: '대한민국의 모든 가정이 사용하지 않는 전등만 꺼도, 발전소 하나를 줄일 수 있다고 해요!' },
       },
       {
         q: '🍽️ 점심에 음식이 남았어요. 어떻게 할까요?',
@@ -382,7 +391,7 @@
       updateEarth(health);
 
       // 결과 패널 채우기
-      document.getElementById('r-emoji').textContent = opt.emoji;
+      document.getElementById('r-emoji').innerHTML = opt.emoji;
       document.getElementById('r-label').textContent = opt.label + ' 선택!';
       const dEl = document.getElementById('r-delta');
       dEl.textContent = (opt.delta > 0 ? '+' : '') + opt.delta;
@@ -466,6 +475,26 @@
     document.getElementById('btn-start').addEventListener('click', startGame);
     document.getElementById('btn-next').addEventListener('click', next);
     document.getElementById('btn-retry').addEventListener('click', startGame);
+    /* ===== 생각해 봐요 답변 (자동 저장/복원) ===== */
+    const REFLECT_KEY = 'reflect-lesson4';
+    function getReflections() {
+      const get = id => (document.getElementById(id)?.value || '').trim();
+      return { q1: get('reflect-1'), q2: get('reflect-2'), q3: get('reflect-3') };
+    }
+    (function initReflections() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(REFLECT_KEY) || '{}'); } catch {}
+      ['reflect-1','reflect-2','reflect-3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const key = 'q' + (i+1);
+        if (saved[key]) el.value = saved[key];
+        el.addEventListener('input', () => {
+          try { localStorage.setItem(REFLECT_KEY, JSON.stringify(getReflections())); } catch {}
+        });
+      });
+    })();
+
     document.getElementById('btn-complete').addEventListener('click', () => {
       try {
         const KEY = 'energy-explorer-v1';
@@ -474,7 +503,7 @@
         [1,2,3,4].forEach(id => { if (!saved.completed.includes(id)) saved.completed.push(id); });
         localStorage.setItem(KEY, JSON.stringify(saved));
       } catch {}
-      if (window.appHelpers) appHelpers.reportProgress(4, { score: health, health, choices: choices.map(c => c.opt.label) });
+      if (window.appHelpers) appHelpers.reportProgress(4, { score: health, health, choices: choices.map(c => c.opt.label), reflections: getReflections() });
       location.href = 'index.html';
     });
 

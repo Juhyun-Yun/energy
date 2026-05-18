@@ -18,7 +18,7 @@
       --glass: rgba(255, 255, 255, 0.8);
     }
     
-    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #0f172a; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #0f172a; word-break: keep-all; overflow-wrap: break-word; }
     #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
     #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; background: #000; }
 
@@ -57,8 +57,8 @@
       pointer-events: none;
       z-index: 50;
     }
-    .smart-tag.visible { opacity: 1; transform: translateY(0); }
-    
+    .smart-tag.visible { opacity: 1; transform: translateY(0); pointer-events: auto; cursor: pointer; }
+
     .tag-label {
       background: #10b981;
       color: white;
@@ -72,7 +72,12 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
+    .smart-tag.visible .tag-label { animation: tagHint 1.6s ease-in-out infinite; }
+    .smart-tag.visible:hover .tag-label { transform: scale(1.08); box-shadow: 0 14px 30px rgba(16,185,129,0.55); animation: none; }
+    .smart-tag.viewed .tag-label { background: #059669; animation: none; }
+    @keyframes tagHint { 0%, 100% { box-shadow: 0 10px 25px rgba(0,0,0,0.3); } 50% { box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 0 0 8px rgba(16,185,129,0.35); } }
     .tag-line {
       width: 2px;
       height: 40px;
@@ -138,31 +143,31 @@
         <div id="hl-led" class="highlight" style="top: 55%; left: 30%; width: 9%; height: 10%;"></div>
 
         <!-- Tags (Positioned on the house features) -->
-        <div id="tag-solar" class="smart-tag" style="top: 6%; left: 36%; transform: translateX(-50%);">
+        <div id="tag-solar" class="smart-tag" data-id="solar" style="top: 6%; left: 36%; transform: translateX(-50%);">
           <div class="tag-label"><span>☀️</span> 태양광 발전 패널</div>
           <div class="tag-line" style="height: 20px;"></div>
         </div>
-        <div id="tag-window" class="smart-tag" style="top: 20%; left: 62%; transform: translateX(-50%);">
+        <div id="tag-window" class="smart-tag" data-id="window" style="top: 20%; left: 62%; transform: translateX(-50%);">
           <div class="tag-label"><span>🪟</span> 3중 단열 유리창</div>
           <div class="tag-line" style="height: 20px;"></div>
         </div>
-        <div id="tag-insulation" class="smart-tag" style="top: 25%; left: 18%; transform: translateX(-50%);">
+        <div id="tag-insulation" class="smart-tag" data-id="insulation" style="top: 25%; left: 18%; transform: translateX(-50%);">
           <div class="tag-label"><span>🧥</span> 벽면 고성능 단열재</div>
           <div class="tag-line" style="height: 20px;"></div>
         </div>
-        <div id="tag-led" class="smart-tag" style="top: 52%; left: 34%; transform: translateX(-50%);">
+        <div id="tag-led" class="smart-tag" data-id="led" style="top: 52%; left: 34%; transform: translateX(-50%);">
           <div class="tag-label"><span>💡</span> LED 조명</div>
           <div class="tag-line" style="height: 15px;"></div>
         </div>
-        <div id="tag-vent" class="smart-tag" style="top: 25%; left: 80%; transform: translateX(-50%);">
+        <div id="tag-vent" class="smart-tag" data-id="vent" style="top: 25%; left: 80%; transform: translateX(-50%);">
           <div class="tag-label"><span>🌬️</span> 자연 환기 시스템</div>
           <div class="tag-line"></div>
         </div>
-        <div id="tag-water" class="smart-tag" style="top: 82%; left: 15%; transform: translateX(-50%);">
+        <div id="tag-water" class="smart-tag" data-id="water" style="top: 82%; left: 15%; transform: translateX(-50%);">
           <div class="tag-label"><span>💧</span> 절수형 시스템</div>
           <div class="tag-line"></div>
         </div>
-        <div id="tag-garden" class="smart-tag" style="top: 10%; left: 65%; transform: translateX(-50%);">
+        <div id="tag-garden" class="smart-tag" data-id="garden" style="top: 10%; left: 65%; transform: translateX(-50%);">
           <div class="tag-label"><span>🌿</span> 옥상 정원</div>
           <div class="tag-line" style="height: 15px;"></div>
         </div>
@@ -173,7 +178,7 @@
         <div class="mb-2">
           <div class="text-[10px] text-emerald-400 font-black tracking-[0.2em] uppercase font-outfit">Mission 6</div>
           <h1 class="text-xl font-black text-white font-title leading-tight">완벽한 에코 하우스의<br>비밀을 찾아보자!</h1>
-          <p class="text-slate-400 text-xs mt-1 font-cute">우리 함께 비밀을 찾아볼까?</p>
+          <p class="text-emerald-300 text-xs mt-1 font-cute">👆 사진의 이름표를 누르면 설명이 나와요</p>
         </div>
 
         <div class="flex-1 flex flex-col gap-2">
@@ -434,27 +439,33 @@
       document.querySelectorAll('.tech-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.smart-tag').forEach(t => t.classList.remove('visible'));
       document.querySelectorAll('.highlight').forEach(h => h.classList.remove('active-highlight'));
-      
+      // 새 항목 선택 시 이전 설명 카드는 숨김 (태그를 다시 눌러야 노출)
+      document.getElementById('detail-card').classList.add('hidden');
+
       const info = TECH_INFO[id];
       const btn = document.querySelector(`.tech-btn[data-id="${id}"]`);
       btn.classList.add('active');
-      
-      // Show Tag & Highlights
+
+      // Show Tag & Highlights only (설명은 태그 클릭 후 노출)
       document.getElementById(info.tagId).classList.add('visible');
       info.hls.forEach(hlId => {
         const hl = document.getElementById(hlId);
         if (hl) hl.classList.add('active-highlight');
       });
+    }
 
-      // Update Detail Card
-      const card = document.getElementById('detail-card');
+    function showTechDetail(id) {
+      const info = TECH_INFO[id];
+      if (!info) return;
       document.getElementById('detail-icon').textContent = info.icon;
       document.getElementById('detail-title').textContent = info.title;
       document.getElementById('detail-desc').textContent = info.desc;
       document.getElementById('detail-impact').textContent = info.impact;
-      card.classList.remove('hidden');
-
-      // Progress
+      document.getElementById('detail-card').classList.remove('hidden');
+      // 태그 표시 — 한 번 본 항목은 색 진하게
+      const tag = document.getElementById(info.tagId);
+      if (tag) tag.classList.add('viewed');
+      // 진행도 카운트 (설명을 본 시점에 +1)
       discovered.add(id);
       updateProgress();
     }
@@ -471,6 +482,12 @@
 
     document.querySelectorAll('.tech-btn').forEach(btn => {
       btn.addEventListener('click', () => showTech(btn.dataset.id));
+    });
+    document.querySelectorAll('.smart-tag').forEach(tag => {
+      tag.addEventListener('click', () => {
+        const id = tag.dataset.id;
+        if (id) showTechDetail(id);
+      });
     });
 
     const resultModal = document.getElementById('result-modal');

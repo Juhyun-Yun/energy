@@ -13,7 +13,7 @@
   <style>
     :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #064e3b; color: #0f172a; touch-action: none; }
+    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #064e3b; color: #0f172a; touch-action: none; word-break: keep-all; overflow-wrap: break-word; }
     #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
     #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
 
@@ -28,10 +28,11 @@
     @keyframes flashGreen { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 0 14px rgba(16,185,129,0.55); } }
     @keyframes flashRed   { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0);  } 50% { box-shadow: 0 0 0 14px rgba(239,68,68,0.6);    } }
     @keyframes feedbackPop {
-      0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
-      40%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-      80%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-      100% { transform: translate(-50%, -90%) scale(0.95); opacity: 0; }
+      0%   { transform: translateX(-50%) translateY(40px) scale(0.9); opacity: 0; }
+      12%  { transform: translateX(-50%) translateY(0)    scale(1.05); opacity: 1; }
+      22%  { transform: translateX(-50%) translateY(0)    scale(1); opacity: 1; }
+      85%  { transform: translateX(-50%) translateY(0)    scale(1); opacity: 1; }
+      100% { transform: translateX(-50%) translateY(-20px) scale(0.95); opacity: 0; }
     }
     @keyframes leafDrift {
       0%   { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0.8; }
@@ -42,7 +43,7 @@
     .anim-shake   { animation: shake 0.45s ease-in-out; }
     .anim-flash-g { animation: flashGreen 0.7s ease-out; }
     .anim-flash-r { animation: flashRed   0.7s ease-out; }
-    .anim-fb      { animation: feedbackPop 1.2s ease-out forwards; }
+    .anim-fb      { animation: feedbackPop 2.5s ease-out forwards; }
 
     .leaf { position: absolute; top: -40px; font-size: 22px; animation: leafDrift linear infinite; pointer-events: none; }
 
@@ -176,7 +177,7 @@
         </div>
 
         <!-- 카드 영역 (가운데) -->
-        <div id="card-area" class="absolute pointer-events-none" style="top: 70px; bottom: 60px; left: 320px; right: 320px;">
+        <div id="card-area" class="absolute z-30 pointer-events-none" style="top: 70px; bottom: 60px; left: 320px; right: 320px;">
           <div class="relative w-full h-full pointer-events-auto">
             <div id="card-deck" class="absolute inset-0 mx-auto" style="max-width: 340px; left: 50%; transform: translateX(-50%);"></div>
           </div>
@@ -233,13 +234,22 @@
 
           <!-- 오른쪽: 생각해 봐요 + 버튼 -->
           <div class="w-[55%] h-full flex flex-col gap-4">
-            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 flex-1">
-              <div class="text-2xl font-title text-violet-800 mb-4">💭 생각해 봐요</div>
-              <ul class="space-y-4 text-2xl text-slate-800 font-cute leading-snug">
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">1.</span> <span><b>재생 자원</b>이 좋은 점은 무엇일까요?</span></li>
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">2.</span> <span><b>비재생 자원</b>이 줄어들면 우리 생활은 어떻게 변할까요?</span></li>
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">3.</span> <span>우리 집에서 가장 많이 쓰는 자원은 무엇인가요?</span></li>
-              </ul>
+            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-4 flex-1 overflow-y-auto">
+              <div class="text-xl font-title text-violet-800 mb-3">💭 생각해 봐요</div>
+              <div class="space-y-3 font-cute text-slate-800">
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">1.</span><span><b>재생 자원</b>이 좋은 점은 무엇일까요?</span></div>
+                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">2.</span><span><b>비재생 자원</b>이 줄어들면 우리 생활은 어떻게 변할까요?</span></div>
+                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">3.</span><span>우리 집에서 가장 많이 쓰는 자원은 무엇인가요?</span></div>
+                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+              </div>
             </div>
 
             <div class="flex gap-3">
@@ -297,7 +307,7 @@
       { emoji: '💧', name: '강물',   type: 'renewable',    hint: '비가 내리면 강이 다시 채워져요.' },
       { emoji: '🌊', name: '파도',   type: 'renewable',    hint: '바다의 파도는 멈추지 않아요.' },
       { emoji: '♨️', name: '지열',   type: 'renewable',    hint: '땅속의 뜨거운 열은 줄어들지 않아요.' },
-      { emoji: '🌳', name: '나무',   type: 'renewable',    hint: '다시 심으면 자라나는 자원이에요.' },
+      { emoji: '🌳', name: '나무',   type: 'renewable',    hint: '베어 쓴 자리에 새로 심으면 다시 자라는 자원이에요.', source: '한국에너지공단 신·재생에너지센터, 산림청' },
       { emoji: '🪨', name: '석탄',   type: 'nonrenewable', hint: '수억 년 전에 만들어진 화석 자원!' },
       { emoji: '🛢️', name: '석유',   type: 'nonrenewable', hint: '다 쓰면 다시 만들어지지 않아요.' },
       { emoji: '⛽', name: '천연가스', type: 'nonrenewable', hint: '땅속에 양이 정해져 있어요.' },
@@ -421,10 +431,16 @@
         activeCardEl = null;
         const cardRect = card.getBoundingClientRect();
         const binRect  = binEl.getBoundingClientRect();
-        const tx = ((binRect.left + binRect.width  / 2) - (cardRect.left + cardRect.width  / 2)) / __scale;
-        const ty = ((binRect.top  + binRect.height / 2) - (cardRect.top  + cardRect.height / 2)) / __scale;
-        card.style.transition = 'transform 0.45s cubic-bezier(.45,.04,.6,1), opacity 0.45s';
-        card.style.transform  = `translate(${tx}px, ${ty}px) scale(0.25) rotate(${binType === 'renewable' ? -25 : 25}deg)`;
+        const cardCenterX = cardRect.left + cardRect.width  / 2;
+        const cardCenterY = cardRect.top  + cardRect.height / 2;
+        // 분류통 위쪽(아이콘 자리)으로 떠오르며 작아져서 사라지기
+        const targetX = binRect.left + binRect.width / 2;
+        const targetY = binRect.top + 60; // 분류통 상단 영역
+        const tx = (targetX - cardCenterX) / __scale;
+        const ty = (targetY - cardCenterY) / __scale;
+        card.style.zIndex = '999';
+        card.style.transition = 'transform 0.55s cubic-bezier(.4,.0,.2,1), opacity 0.55s';
+        card.style.transform  = `translate(${tx}px, ${ty}px) scale(0.3) rotate(${binType === 'renewable' ? -20 : 20}deg)`;
         card.style.opacity    = '0';
         binEl.classList.add('anim-flash-g');
         setTimeout(() => binEl.classList.remove('anim-flash-g'), 700);
@@ -442,7 +458,7 @@
 
         correct++;
         document.getElementById('score').textContent = correct;
-        showFeedback('✓ 정답!', '#059669', cardData.hint);
+        showFeedback('✓ 정답!', '#059669', cardData.hint, cardData.source);
 
         setTimeout(() => {
           idx++;
@@ -461,17 +477,24 @@
       }
     }
 
-    function showFeedback(text, color, hint) {
+    function showFeedback(text, color, hint, source) {
       const el = document.createElement('div');
-      el.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 anim-fb text-center pointer-events-none';
+      el.className = 'absolute left-1/2 anim-fb text-center pointer-events-none';
+      el.style.bottom = '54px';
+      el.style.maxWidth = '520px';
+      // 출처가 있는 경우 더 오래 노출
+      if (source) el.style.animationDuration = '3.5s';
       el.innerHTML = `
-        <div class="px-6 py-4 rounded-2xl bg-white/95 backdrop-blur shadow-2xl border-2 inline-block" style="border-color: ${color};">
-          <div class="text-3xl font-extrabold" style="color: ${color};">${text}</div>
-          ${hint ? `<div class="text-lg text-slate-700 mt-1 font-medium">💡 ${hint}</div>` : ''}
+        <div class="px-4 py-2 rounded-xl bg-white/95 backdrop-blur shadow-xl border-2 inline-block" style="border-color: ${color};">
+          <div class="flex items-baseline gap-2 justify-center">
+            <span class="text-lg font-extrabold" style="color: ${color};">${text}</span>
+            ${hint ? `<span class="text-sm text-slate-700 font-medium">💡 ${hint}</span>` : ''}
+          </div>
+          ${source ? `<div class="text-[10px] text-slate-500 italic mt-1 pt-1 border-t border-slate-200">참고: ${source}</div>` : ''}
         </div>
       `;
       fbLayer.appendChild(el);
-      setTimeout(() => el.remove(), 1200);
+      setTimeout(() => el.remove(), source ? 3500 : 2500);
     }
 
     /* ===== 게임 시작/종료 ===== */
@@ -519,6 +542,26 @@
     /* ===== 이벤트 ===== */
     document.getElementById('btn-start').addEventListener('click', startGame);
     document.getElementById('btn-retry').addEventListener('click', startGame);
+    /* ===== 생각해 봐요 답변 (자동 저장/복원) ===== */
+    const REFLECT_KEY = 'reflect-lesson2';
+    function getReflections() {
+      const get = id => (document.getElementById(id)?.value || '').trim();
+      return { q1: get('reflect-1'), q2: get('reflect-2'), q3: get('reflect-3') };
+    }
+    (function initReflections() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(REFLECT_KEY) || '{}'); } catch {}
+      ['reflect-1','reflect-2','reflect-3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const key = 'q' + (i+1);
+        if (saved[key]) el.value = saved[key];
+        el.addEventListener('input', () => {
+          try { localStorage.setItem(REFLECT_KEY, JSON.stringify(getReflections())); } catch {}
+        });
+      });
+    })();
+
     document.getElementById('btn-complete').addEventListener('click', () => {
       try {
         const KEY = 'energy-explorer-v1';
@@ -528,7 +571,7 @@
         if (!saved.completed.includes(1)) saved.completed.push(1);
         localStorage.setItem(KEY, JSON.stringify(saved));
       } catch {}
-      if (window.appHelpers) appHelpers.reportProgress(2, { score: correct, correct, mistakes });
+      if (window.appHelpers) appHelpers.reportProgress(2, { score: correct, correct, mistakes, reflections: getReflections() });
       location.href = 'index.html';
     });
   </script>

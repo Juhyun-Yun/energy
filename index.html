@@ -17,10 +17,11 @@
       --bg: #f8fafc;
     }
     
-    html, body { 
-      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; 
-      background: #e2e8f0; 
+    html, body {
+      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+      background: #e2e8f0;
       display: flex; align-items: center; justify-content: center;
+      word-break: keep-all; overflow-wrap: break-word;
     }
     
     #stage-wrapper { 
@@ -162,19 +163,19 @@
       </div>
     </div>
 
-    <div id="select-screen" class="absolute inset-0 z-[200] hidden items-center justify-center bg-slate-50">
-      <div class="bg-white p-12 rounded-3xl shadow-xl max-w-md w-full text-center border border-slate-100">
+    <div id="select-screen" class="absolute inset-0 z-[200] hidden items-center justify-center" style="background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(6px);">
+      <div class="bg-white p-12 rounded-3xl shadow-2xl max-w-md w-full text-center border-2 border-slate-300">
         <div class="w-24 h-24 bg-emerald-500 rounded-2xl flex items-center justify-center text-5xl text-white mx-auto mb-8 shadow-xl">🌏</div>
         <h2 class="text-3xl font-black text-slate-900 mb-2 font-title">자원 지킴이</h2>
-        <p class="text-slate-500 font-bold mb-6">탐험을 시작할 이름을 선택하세요.</p>
+        <p class="text-slate-600 font-bold mb-6">탐험을 시작할 이름을 선택하세요.</p>
         <div id="connect-status" class="hidden mb-4 px-4 py-3 rounded-xl text-sm font-bold text-left"></div>
-        <select id="student-select" class="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 text-slate-800 text-xl font-black mb-6 outline-none focus:border-emerald-500 transition">
+        <select id="student-select" class="w-full p-4 rounded-xl border-2 border-slate-400 bg-white text-slate-900 text-xl font-black mb-6 outline-none focus:border-emerald-500 transition shadow-sm">
           <option value="">이름 선택</option>
         </select>
         <button id="btn-enter" disabled class="w-full py-6 rounded-xl bg-emerald-500 text-white text-2xl font-black shadow-lg disabled:opacity-30 transition active:scale-95 font-title">
           탐험 시작!
         </button>
-        <a href="connect_test.html" class="block mt-4 text-xs text-slate-400 hover:text-emerald-600 underline">🔌 연결이 안 될 때 — 진단 도구 열기</a>
+        <a href="connect_test.html" class="block mt-4 text-xs text-slate-500 hover:text-emerald-600 underline">🔌 연결이 안 될 때 — 진단 도구 열기</a>
       </div>
     </div>
 

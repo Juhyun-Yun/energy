@@ -13,7 +13,7 @@
   <style>
     :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0c4a6e; color: #0f172a; touch-action: none; }
+    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0c4a6e; color: #0f172a; touch-action: none; word-break: keep-all; overflow-wrap: break-word; }
     #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
     #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
 
@@ -174,8 +174,9 @@
               <div class="w-1/2 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-inner bg-slate-100 flex items-center justify-center">
                 <img id="outro-img" src="" alt="발전소 실물 사진" class="w-full h-full object-cover">
               </div>
-              <div class="w-1/2 bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 overflow-y-auto">
-                <ul id="outro-facts" class="space-y-3 text-lg text-slate-800 font-cute leading-snug"></ul>
+              <div class="w-1/2 bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 overflow-y-auto flex flex-col">
+                <ul id="outro-facts" class="space-y-3 text-lg text-slate-800 font-cute leading-snug flex-1"></ul>
+                <div id="outro-source" class="mt-3 pt-2 border-t border-violet-200 text-[11px] text-slate-500 italic leading-snug"></div>
               </div>
             </div>
             <button id="btn-outro-done" class="mt-3 w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white text-xl font-extrabold shadow-xl active:scale-95 transition font-title shrink-0">
@@ -198,13 +199,22 @@
             </div>
           </div>
           <div class="w-[58%] h-full flex flex-col gap-4 pl-6">
-            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-5 flex-1">
-              <div class="text-2xl font-title text-violet-800 mb-4">💭 생각해 봐요</div>
-              <ul class="space-y-4 text-2xl text-slate-800 font-cute leading-snug">
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">1.</span> 6가지 재생에너지의 공통점은 무엇일까요?</li>
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">2.</span> 우리 동네에 어떤 발전소가 가장 잘 어울릴까요?</li>
-                <li class="flex gap-2"><span class="text-violet-600 font-bold">3.</span> 재생에너지의 좋은 점은 무엇일까요?</li>
-              </ul>
+            <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-3 flex-1 overflow-y-auto">
+              <div class="text-lg font-title text-violet-800 mb-2">💭 생각해 봐요</div>
+              <div class="space-y-2 font-cute text-slate-800">
+                <div>
+                  <div class="flex gap-2 text-sm leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">1.</span><span>6가지 재생에너지의 공통점은 무엇일까요?</span></div>
+                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-1 text-sm resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-sm leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">2.</span><span>우리 동네에 어떤 발전소가 가장 잘 어울릴까요?</span></div>
+                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-1 text-sm resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-sm leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">3.</span><span>재생에너지의 좋은 점은 무엇일까요?</span></div>
+                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-1 text-sm resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                </div>
+              </div>
             </div>
             <div class="flex gap-3">
               <button id="btn-retry-all" class="flex-1 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-lg border border-slate-200 transition active:scale-95 font-title">
@@ -253,7 +263,8 @@
             '☀️ 한국 새만금 태양광 단지는 축구장 280개 크기예요!',
             '🏠 옥상에 패널 한 장만 깔아도 전기차 한 대분 전기가 나와요.',
             '🌍 1시간 동안 지구에 닿는 햇빛만으로 1년치 인류 에너지를 만들 수 있어요.'
-          ]
+          ],
+          source: '한국에너지공단 신·재생에너지센터, 5학년 과학 교과서'
         }
       },
       {
@@ -271,7 +282,8 @@
             '💨 대형 풍력 터빈 1대 = 약 2,000가구 1년치 전기를 만들어요.',
             '🌊 한국 서해안에 큰 해상 풍력 단지가 늘고 있어요.',
             '🦅 새들이 다치지 않도록 날개를 천천히 돌리는 기술도 있어요.'
-          ]
+          ],
+          source: '한국에너지공단 신·재생에너지센터, 한국풍력산업협회'
         }
       },
       {
@@ -289,7 +301,8 @@
             '🌋 아이슬란드는 화산이 많아서 전기의 30%를 지열로 만들어요!',
             '⛰️ 한국은 화산이 적어서 3km 이상 깊이 파야 해요.',
             '♨️ 온천도 일종의 지열! 땅 깊은 곳의 뜨거운 물이 솟아오르는 거예요.'
-          ]
+          ],
+          source: '한국에너지공단 신·재생에너지센터, 5학년 과학 교과서'
         }
       },
       {
@@ -307,7 +320,8 @@
             '🏔️ 한국에서 가장 큰 소양강댐은 1973년부터 전기를 만들고 있어요.',
             '⚡ 댐 하나가 한 도시의 전기를 책임질 수도 있어요.',
             '🐟 물고기가 댐을 지나가도록 "어도(魚道)"라는 길도 만들어요.'
-          ]
+          ],
+          source: '한국수력원자력, 5학년 과학 교과서'
         }
       },
       {
@@ -325,7 +339,8 @@
             '🌽 옥수수·사탕수수·음식물 쓰레기 등 다양한 재료를 쓸 수 있어요.',
             '🍚 우리나라 음식물 쓰레기로 매년 30만 가구분의 전기를 만들고 있어요.',
             '🌳 식물은 다시 자라기 때문에 끝없이 에너지를 얻을 수 있어요!'
-          ]
+          ],
+          source: '한국에너지공단 신·재생에너지센터, 환경부'
         }
       },
       {
@@ -343,7 +358,8 @@
             '🌊 시화호 조력발전소는 세계에서 가장 큰 조력발전소예요!',
             '🌙 달의 인력 때문에 바닷물이 들고 나요. 하루 2번씩 만조와 간조가 있어요.',
             '⏰ 바다는 24시간 끊임없이 움직이는 거대한 에너지원이에요.'
-          ]
+          ],
+          source: '한국수자원공사(K-water), 5학년 과학 교과서'
         }
       },
     ];
@@ -441,6 +457,8 @@
       document.getElementById('outro-img').src = p.img;
       const facts = document.getElementById('outro-facts');
       facts.innerHTML = p.outro.facts.map(f => `<li class="flex gap-2"><span class="text-violet-500 font-bold">•</span> ${f}</li>`).join('');
+      const srcEl = document.getElementById('outro-source');
+      if (srcEl) srcEl.textContent = p.outro.source ? '참고: ' + p.outro.source : '';
       showPhase('outro');
     }
 
@@ -596,7 +614,7 @@
             </div>
  
             <!-- 작동 설명 카드 -->
-            <div class="absolute bottom-2 left-2 p-3 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="width: 340px;">
+            <div class="absolute bottom-2 left-2 p-3 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-white/30" style="width: 340px;">
               <div class="flex items-center gap-2 mb-1.5">
                 <div class="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center text-lg shadow border-2 border-white/30">📋</div>
                 <div class="font-title text-base">작동 설명</div>
@@ -977,7 +995,7 @@
             </div>
 
             <!-- 작동 설명 카드 -->
-            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="bottom: 95px; left: 6px; width: 300px;">
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-white/30" style="bottom: 95px; left: 6px; width: 300px;">
               <div class="flex items-center gap-2 mb-1">
                 <div class="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
                 <div class="font-title text-sm">작동 설명</div>
@@ -1161,7 +1179,7 @@
             <div id="g-steam-wrap" class="absolute pointer-events-none" style="left: 50%; width: 60px; height: 60px; transform: translateX(-50%); top: 0;"></div>
 
             <!-- 박사님 카드 (왼쪽 아래, 버튼 위) -->
-            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="bottom: 88px; left: 6px; width: 320px;">
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-white/30" style="bottom: 88px; left: 6px; width: 320px;">
               <div class="flex items-center gap-2 mb-1">
                 <div class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
                 <div class="font-title text-sm">작동 설명</div>
@@ -1340,7 +1358,7 @@
             </div>
 
             <!-- 박사님 카드 -->
-            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15" style="bottom: 70px; left: 6px; width: 300px;">
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-white/30" style="bottom: 70px; left: 6px; width: 300px;">
               <div class="flex items-center gap-2 mb-1">
                 <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
                 <div class="font-title text-sm">작동 설명</div>
@@ -1409,7 +1427,7 @@
             <div class="absolute text-4xl" style="top: 6px; right: 240px;">☀️</div>
 
             <!-- 작동 설명 카드 -->
-            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15 z-10" style="top: 6px; left: 6px; width: 310px;">
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-white/30 z-10" style="top: 6px; left: 6px; width: 310px;">
               <div class="flex items-center gap-2 mb-1">
                 <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
                 <div class="font-title text-sm">작동 설명</div>
@@ -1472,7 +1490,10 @@
           const basketCountEl = document.getElementById('b-basket-count');
           const fx = document.getElementById('b-fx');
           const plantBtn = document.getElementById('b-plant');
-          const STAGES = ['🌰','🌱','🌿','🌾','🌽'];
+          // 옥수수 한살이: 씨앗 → 새싹 → 어린잎 → 줄기(키 큰 좁은 잎) → 옥수수 열매
+          const CORN_STALK_SVG = '<svg viewBox="0 0 60 64" width="60" height="64" style="display:block;"><line x1="30" y1="64" x2="30" y2="6" stroke="#65a30d" stroke-width="3" stroke-linecap="round"/><path d="M30,46 Q14,40 4,32 Q16,44 30,50 Z" fill="#16a34a" stroke="#15803d" stroke-width="0.5"/><path d="M30,46 Q46,40 56,32 Q44,44 30,50 Z" fill="#16a34a" stroke="#15803d" stroke-width="0.5"/><path d="M30,28 Q12,22 2,10 Q14,24 30,32 Z" fill="#22c55e" stroke="#15803d" stroke-width="0.5"/><path d="M30,28 Q48,22 58,10 Q46,24 30,32 Z" fill="#22c55e" stroke="#15803d" stroke-width="0.5"/><path d="M30,12 Q22,4 16,0 Q24,8 30,14 Z" fill="#16a34a" stroke="#15803d" stroke-width="0.5"/><path d="M30,12 Q38,4 44,0 Q36,8 30,14 Z" fill="#16a34a" stroke="#15803d" stroke-width="0.5"/></svg>';
+          const STAGES = ['🫘','🌱','🌿', CORN_STALK_SVG, '🌽'];
+          const STAGE_NAMES = ['씨앗','새싹','어린잎','줄기','옥수수'];
           const PLOT_COUNT = 5;
           const states = [];
           let basket = 0;
@@ -1481,10 +1502,17 @@
             const wrap = document.createElement('div');
             wrap.className = 'relative flex items-end justify-center';
             const el = document.createElement('button');
-            el.className = 'transition-transform select-none cursor-pointer leading-none active:scale-90';
-            el.style.fontSize = '72px';
-            el.textContent = STAGES[0];
-            const st = { stage: 0, el, wrap };
+            el.className = 'transition-transform select-none cursor-pointer leading-none active:scale-90 flex flex-col items-center';
+            const emojiEl = document.createElement('div');
+            emojiEl.style.fontSize = '64px';
+            emojiEl.style.lineHeight = '1';
+            emojiEl.innerHTML = STAGES[0];
+            const labelEl = document.createElement('div');
+            labelEl.className = 'font-title font-extrabold text-white text-xs mt-0.5 px-1.5 py-0.5 rounded bg-emerald-800/80';
+            labelEl.textContent = STAGE_NAMES[0];
+            el.appendChild(emojiEl);
+            el.appendChild(labelEl);
+            const st = { stage: 0, el, emojiEl, labelEl, wrap };
             states.push(st);
             wrap.appendChild(el);
             plots.appendChild(wrap);
@@ -1493,7 +1521,8 @@
               if (st.stage < 4) {
                 // 물주기로 한 단계 성장
                 st.stage += 1;
-                el.textContent = STAGES[st.stage];
+                emojiEl.innerHTML = STAGES[st.stage];
+                labelEl.textContent = STAGE_NAMES[st.stage];
                 // 물방울 효과
                 const rect = el.getBoundingClientRect();
                 const arenaRect = arena.getBoundingClientRect();
@@ -1541,7 +1570,8 @@
                 setTimeout(() => basketCountEl.classList.remove('anim-shake'), 300);
                 // 작물 리셋 (다시 씨앗부터)
                 st.stage = 0;
-                el.textContent = STAGES[0];
+                emojiEl.innerHTML = STAGES[0];
+                labelEl.textContent = STAGE_NAMES[0];
                 el.style.filter = '';
                 el.style.animation = '';
                 updateBioMsg();
@@ -1624,7 +1654,7 @@
             <div id="o-rod" class="absolute" style="left: 50%; bottom: 92px; transform: translateX(-50%); width: 6px; background: linear-gradient(to bottom, #f1f5f9, #64748b); border-radius: 3px; height: 60px; transition: height 0.05s linear; z-index: 3;"></div>
 
             <!-- 부표 (파도 위에 떠 있음, h에 따라 위아래) -->
-            <div id="o-buoy" class="absolute" style="left: 50%; bottom: 150px; transform: translateX(-50%); font-size: 70px; line-height: 1; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); transition: bottom 0.05s linear, transform 0.15s; z-index: 4;">🛟</div>
+            <div id="o-buoy" class="absolute" style="left: 50%; bottom: 112px; transform: translateX(-50%); font-size: 70px; line-height: 1; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); transition: bottom 0.05s linear, transform 0.15s; z-index: 4;">🛟</div>
 
             <!-- 발전기 박스 (해저, 항상 고정) -->
             <div class="absolute" style="left: 50%; bottom: 60px; transform: translateX(-50%); width: 80px; height: 36px; z-index: 2;">
@@ -1649,7 +1679,7 @@
             </div>
 
             <!-- 작동 설명 카드 (원리 포함) -->
-            <div class="absolute p-2.5 rounded-2xl bg-slate-900/92 text-white shadow-xl border border-white/15 z-10" style="top: 6px; left: 6px; width: 320px;">
+            <div class="absolute p-2.5 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-white/30 z-10" style="top: 6px; left: 6px; width: 320px;">
               <div class="flex items-center gap-2 mb-1">
                 <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-base shadow border-2 border-white/30">📋</div>
                 <div class="font-title text-sm">작동 설명</div>
@@ -1701,7 +1731,7 @@
             // 부표는 파도 상단(평균선 baseY) 위에 살짝 띄워 떠 있음
             // arena_bottom 위치 = 310 - baseY (평균선 기준) + 살짝 위로
             const waveTopArenaY = 310 - baseY; // 파도 평균선의 arena 바닥 기준 y
-            const buoyBottom = waveTopArenaY + 8; // 부표가 파도 위에 약간 떠 있음
+            const buoyBottom = waveTopArenaY - 30; // 부표가 파도 위에 약간 떠 있음 (1cm 아래로 조정)
             buoy.style.bottom = buoyBottom + 'px';
             // 막대: 부표 아래에서 발전기 윗면(약 96px)까지 늘어남
             rod.style.height = Math.max(20, buoyBottom - 96) + 'px';
@@ -1768,6 +1798,26 @@
       end.style.display = 'none';
       renderHub();
     });
+    /* ===== 생각해 봐요 답변 (자동 저장/복원) ===== */
+    const REFLECT_KEY = 'reflect-lesson3';
+    function getReflections() {
+      const get = id => (document.getElementById(id)?.value || '').trim();
+      return { q1: get('reflect-1'), q2: get('reflect-2'), q3: get('reflect-3') };
+    }
+    (function initReflections() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(REFLECT_KEY) || '{}'); } catch {}
+      ['reflect-1','reflect-2','reflect-3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const key = 'q' + (i+1);
+        if (saved[key]) el.value = saved[key];
+        el.addEventListener('input', () => {
+          try { localStorage.setItem(REFLECT_KEY, JSON.stringify(getReflections())); } catch {}
+        });
+      });
+    })();
+
     document.getElementById('btn-complete').addEventListener('click', () => {
       try {
         const KEY = 'energy-explorer-v1';
@@ -1776,7 +1826,7 @@
         [1,2,3].forEach(id => { if (!saved.completed.includes(id)) saved.completed.push(id); });
         localStorage.setItem(KEY, JSON.stringify(saved));
       } catch {}
-      if (window.appHelpers) appHelpers.reportProgress(3, { score: completed.size, plants: [...completed] });
+      if (window.appHelpers) appHelpers.reportProgress(3, { score: completed.size, plants: [...completed], reflections: getReflections() });
       location.href = 'index.html';
     });
 

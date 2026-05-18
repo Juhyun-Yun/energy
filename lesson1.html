@@ -13,7 +13,7 @@
   <style>
     :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0b1029; color: white; }
+    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0b1029; color: white; word-break: keep-all; overflow-wrap: break-word; }
     #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
     #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
 
@@ -331,13 +331,22 @@
 
           <!-- 오른쪽: 생각해 봐요 + 버튼 -->
           <div class="w-[55%] h-full flex flex-col gap-4">
-            <div class="bg-violet-500/15 border-2 border-violet-300/30 rounded-2xl p-5 flex-1">
-              <div class="text-2xl font-title text-violet-200 mb-4">💭 생각해 봐요</div>
-              <ul class="space-y-4 text-2xl text-white/95 font-cute leading-snug">
-                <li class="flex gap-2"><span class="text-violet-300 font-bold shrink-0">1.</span><span>우리가 매일 쓰는 자원 중에서, 장작처럼 <b>점점 줄어드는 자원</b>은 무엇이 있을까요? (예: 석탄, 석유, 가스)</span></li>
-                <li class="flex gap-2"><span class="text-violet-300 font-bold shrink-0">2.</span><span>자원이 다 떨어지면 우리 생활은 어떻게 변할까요?</span></li>
-                <li class="flex gap-2"><span class="text-violet-300 font-bold shrink-0">3.</span><span>자원을 <b>오래 쓰려면</b> 어떤 노력이 필요할까요?</span></li>
-              </ul>
+            <div class="bg-violet-500/15 border-2 border-violet-300/30 rounded-2xl p-4 flex-1 overflow-y-auto">
+              <div class="text-xl font-title text-violet-200 mb-3">💭 생각해 봐요</div>
+              <div class="space-y-3 font-cute text-white/95">
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-300 font-bold shrink-0">1.</span><span>우리가 매일 쓰는 자원 중에서, 장작처럼 <b>점점 줄어드는 자원</b>은 무엇이 있을까요? (예: 석탄, 석유, 가스)</span></div>
+                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white/10 focus:bg-white/20 text-white placeholder-white/40 border border-white/20 focus:border-violet-300 outline-none rounded-xl px-3 py-1.5 text-base resize-none leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-300 font-bold shrink-0">2.</span><span>자원이 다 떨어지면 우리 생활은 어떻게 변할까요?</span></div>
+                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white/10 focus:bg-white/20 text-white placeholder-white/40 border border-white/20 focus:border-violet-300 outline-none rounded-xl px-3 py-1.5 text-base resize-none leading-snug"></textarea>
+                </div>
+                <div>
+                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-300 font-bold shrink-0">3.</span><span>자원을 <b>오래 쓰려면</b> 어떤 노력이 필요할까요?</span></div>
+                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white/10 focus:bg-white/20 text-white placeholder-white/40 border border-white/20 focus:border-violet-300 outline-none rounded-xl px-3 py-1.5 text-base resize-none leading-snug"></textarea>
+                </div>
+              </div>
             </div>
 
             <div class="flex gap-3">
@@ -655,6 +664,26 @@
       document.getElementById('screen-game').classList.remove('hidden');
       started = false; startGame();
     });
+    /* ===== 생각해 봐요 답변 (자동 저장/복원) ===== */
+    const REFLECT_KEY = 'reflect-lesson1';
+    function getReflections() {
+      const get = id => (document.getElementById(id)?.value || '').trim();
+      return { q1: get('reflect-1'), q2: get('reflect-2'), q3: get('reflect-3') };
+    }
+    (function initReflections() {
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(REFLECT_KEY) || '{}'); } catch {}
+      ['reflect-1','reflect-2','reflect-3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const key = 'q' + (i+1);
+        if (saved[key]) el.value = saved[key];
+        el.addEventListener('input', () => {
+          try { localStorage.setItem(REFLECT_KEY, JSON.stringify(getReflections())); } catch {}
+        });
+      });
+    })();
+
     document.getElementById('btn-complete').addEventListener('click', () => {
       const sec = Math.floor(elapsedMs / 1000);
       try {
@@ -664,7 +693,7 @@
         if (!saved.completed.includes(1)) saved.completed.push(1);
         localStorage.setItem(KEY, JSON.stringify(saved));
       } catch {}
-      if (window.appHelpers) appHelpers.reportProgress(1, { score: sec, time: sec, wood: woodUsedTotal });
+      if (window.appHelpers) appHelpers.reportProgress(1, { score: sec, time: sec, wood: woodUsedTotal, reflections: getReflections() });
       location.href = 'index.html';
     });
 
