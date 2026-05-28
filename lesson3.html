@@ -13,7 +13,7 @@
   <style>
     :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0c4a6e; color: #0f172a; touch-action: none; word-break: keep-all; overflow-wrap: break-word; }
+    body { font-family: 'Jua', 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #0c4a6e; color: #0f172a; touch-action: none; word-break: keep-all; overflow-wrap: break-word; }
     #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
     #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
 
@@ -66,6 +66,13 @@
     /* 태양광 패널 그리드 (실제 모습) */
     .panel-grid-cell { background: linear-gradient(135deg, #1e40af 25%, #1e3a8a 25%, #1e3a8a 50%, #1e40af 50%, #1e40af 75%, #1e3a8a 75%); background-size: 8px 8px; border: 1px solid #0f172a; }
     .steam { position: absolute; width: 30px; height: 30px; border-radius: 9999px; background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,255,255,0.3)); animation: steamRise 2s ease-out infinite; pointer-events: none; }
+
+    /* 인트로 본문 글씨 1.5배 + 줄간격 (제목/큰 이모지는 그대로) */
+    #screen-intro .text-xs   { font-size: 1.125rem  !important; line-height: 1.7 !important; }
+    #screen-intro .text-sm   { font-size: 1.3125rem !important; line-height: 1.7 !important; }
+    #screen-intro .text-base { font-size: 1.5rem    !important; line-height: 1.65 !important; }
+    #screen-intro .text-lg   { font-size: 1.6875rem !important; line-height: 1.55 !important; }
+    #screen-intro .text-xl   { font-size: 1.875rem  !important; line-height: 1.5 !important; }
   </style>
 </head>
 <body>
@@ -200,19 +207,19 @@
           </div>
           <div class="w-[58%] h-full flex flex-col gap-4 pl-6">
             <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-3 flex-1 overflow-y-auto">
-              <div class="text-lg font-title text-violet-800 mb-2">💭 생각해 봐요</div>
+              <div class="text-3xl font-title text-violet-800 mb-2">💭 생각해 봐요</div>
               <div class="space-y-2 font-cute text-slate-800">
                 <div>
-                  <div class="flex gap-2 text-sm leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">1.</span><span>6가지 재생에너지의 공통점은 무엇일까요?</span></div>
-                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-1 text-sm resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                  <div class="flex gap-2 text-2xl leading-relaxed mb-1"><span class="text-violet-600 font-bold shrink-0">1.</span><span>6가지 재생에너지의 공통점은 무엇일까요?</span></div>
+                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-2 text-2xl resize-none text-slate-800 placeholder-slate-400 leading-relaxed"></textarea>
                 </div>
                 <div>
-                  <div class="flex gap-2 text-sm leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">2.</span><span>우리 동네에 어떤 발전소가 가장 잘 어울릴까요?</span></div>
-                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-1 text-sm resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                  <div class="flex gap-2 text-2xl leading-relaxed mb-1"><span class="text-violet-600 font-bold shrink-0">2.</span><span>우리 동네에 어떤 발전소가 가장 잘 어울릴까요?</span></div>
+                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-2 text-2xl resize-none text-slate-800 placeholder-slate-400 leading-relaxed"></textarea>
                 </div>
                 <div>
-                  <div class="flex gap-2 text-sm leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">3.</span><span>재생에너지의 좋은 점은 무엇일까요?</span></div>
-                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-1 text-sm resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                  <div class="flex gap-2 text-2xl leading-relaxed mb-1"><span class="text-violet-600 font-bold shrink-0">3.</span><span>재생에너지의 좋은 점은 무엇일까요?</span></div>
+                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-lg px-2.5 py-2 text-2xl resize-none text-slate-800 placeholder-slate-400 leading-relaxed"></textarea>
                 </div>
               </div>
             </div>

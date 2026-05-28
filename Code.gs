@@ -37,9 +37,82 @@ function onOpen() {
     .addItem('📡 실시간 현황 (사이드바)', 'showSidebar')
     .addItem('📈 전체 현황 (큰 팝업)', 'showDashboard')
     .addSeparator()
+    .addItem('🔑 작품 업로드 권한 승인하기', 'authorizeDrive')
     .addItem('📖 선생님 설정 안내 다시 만들기', 'rebuildGuideSheet')
     .addItem('🔄 진행기록 시트 초기화', 'resetRecords')
     .addToUi();
+}
+
+/* 학생이 작품을 업로드하려면 Drive 권한이 필요해요.
+ * 이 함수는 메뉴에서도, 편집기에서도 실행할 수 있지만
+ * 권한 다이얼로그는 "편집기에서 직접 실행"해야 안정적으로 떠요. */
+function authorizeDrive() {
+  const ui = SpreadsheetApp.getUi();
+
+  // 1단계: Drive 접근 권한 확인
+  try {
+    DriveApp.getRootFolder();
+  } catch (e) {
+    ui.alert(
+      '🔑 Drive 권한 승인이 필요해요',
+      '【중요】 메뉴 클릭만으로는 권한 창이 안 뜰 때가 많아요.\n' +
+      '아래 방법으로 "편집기에서 직접 실행"해 주세요.\n\n' +
+      '━━━━━━━━━━━━━━━━━━━\n' +
+      '1️⃣  메뉴: [확장 프로그램] → [Apps Script]\n' +
+      '2️⃣  좌측 파일 목록의 "Code.gs" 클릭\n' +
+      '3️⃣  상단 함수 드롭다운에서 "authorizeDrive" 선택\n' +
+      '4️⃣  ▶ "실행" 버튼 클릭\n' +
+      '5️⃣  뜨는 권한 요청 창에서:\n' +
+      '       → 본인 Google 계정 선택\n' +
+      '       → "고급" 클릭\n' +
+      '       → "(안전하지 않음)..." 링크 클릭\n' +
+      '       → 모든 권한 "허용"\n' +
+      '━━━━━━━━━━━━━━━━━━━\n\n' +
+      '【필수】 권한 승인 후 반드시 새 배포!\n' +
+      '편집기 우상단 [배포] → [배포 관리]\n' +
+      '→ 기존 배포 옆 ✏️(편집) → 버전 "새 버전" 선택 → [배포]\n' +
+      '(URL은 그대로 유지됨)\n\n' +
+      '오류 원본: ' + (e.message || e),
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
+  // 2단계: 작품 폴더 생성/조회
+  let folder;
+  try {
+    folder = getWorksFolder_();
+  } catch (e) {
+    ui.alert(
+      '⚠️ 폴더 접근 실패',
+      'Drive 권한은 있는데 폴더 생성에서 실패했어요.\n오류: ' + (e.message || e),
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
+  // 3단계: 매니페스트(appsscript.json) 확인
+  let manifestNote = '';
+  try {
+    const mf = JSON.parse(DriveApp.getFileById(ScriptApp.getScriptId()).getBlob().getDataAsString());
+    const scopes = (mf && mf.oauthScopes) || [];
+    const hasDrive = scopes.some(s => /\/auth\/drive$|\/auth\/drive\.readonly$/.test(s));
+    if (!hasDrive && scopes.length > 0) {
+      manifestNote = '\n\n⚠️ 매니페스트에 Drive 권한이 빠져 있어요. ' +
+        '편집기 ⚙️ 설정에서 매니페스트를 보이게 한 뒤, oauthScopes에 ' +
+        '"https://www.googleapis.com/auth/drive"를 추가하고 새 배포하세요.';
+    }
+  } catch (e) { /* 매니페스트 자체를 못 읽으면 무시 */ }
+
+  ui.alert(
+    '✅ 권한 승인 완료',
+    '작품 업로드 권한이 정상이에요.\n작품 저장 폴더: ' + folder.getName() +
+    '\n\n⚠️ 그래도 학생이 업로드 실패한다면 새 배포가 필요할 수 있어요:\n' +
+    '편집기 [배포] → [배포 관리] → 기존 배포 옆 ✏️\n' +
+    '→ 버전 "새 버전" 선택 → [배포]' +
+    manifestNote,
+    ui.ButtonSet.OK
+  );
 }
 
 /* 메뉴에서 안내 시트를 강제로 다시 만들고 싶을 때 */
@@ -128,7 +201,16 @@ function handle_(e) {
     if (action === 'ping')     return { ok: true, message: 'pong' };
     return { ok: false, error: 'unknown_action' };
   } catch (err) {
-    return { ok: false, error: String(err && err.message || err) };
+    const msg = String(err && err.message || err);
+    // Drive 권한 미승인 오류를 친근한 메시지로 변환
+    if (/DriveApp|drive\.readonly|googleapis\.com\/auth\/drive/i.test(msg)) {
+      return {
+        ok: false,
+        errorType: 'drive_not_authorized',
+        error: '선생님의 Drive 권한 승인이 필요해요.\n\n선생님께 알려주세요:\n1. 우리 반 스프레드시트 열기\n2. 메뉴 → 📊 학습 대시보드 → 🔑 작품 업로드 권한 승인하기\n3. (이미 했다면) Apps Script에서 새 배포(새 버전)로 다시 배포'
+      };
+    }
+    return { ok: false, error: msg };
   }
 }
 
@@ -576,8 +658,11 @@ function ensureGuideSheet_(forceRebuild) {
         '   ① 본인 구글 계정 선택\n' +
         '   ② "Google에서 확인하지 않은 앱" 경고 → 왼쪽 아래 [고급] 클릭\n' +
         '   ③ "안전하지 않음으로 이동(Unsafe)" 클릭\n' +
-        '   ④ [허용] 클릭\n' +
-        '※ 본인이 만든(사본) 코드라서 뜨는 경고예요. 안전합니다.\n\n' +
+        '   ④ [허용] 클릭\n\n' +
+        '※ 권한 목록에 다음 항목들이 나와요. 본인 사본이 쓰는 권한이라 안전합니다.\n' +
+        '   • Google 시트  → 학습 기록·작품 정보 저장용\n' +
+        '   • Google 드라이브  → 학생 작품 사진 저장용 (선생님 본인 드라이브의 "에너지 마을 작품" 폴더)\n' +
+        '   • 외부 서비스 연결  → 학생 페이지 ↔ 시트 통신용\n\n' +
         '🎉 배포 끝나면 "웹 앱 URL"이 나와요:\n' +
         '       https://script.google.com/macros/s/AKfyc........./exec\n\n' +
         '   → [복사] 버튼을 누르세요. 3단계에서 씁니다!'

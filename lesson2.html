@@ -13,7 +13,7 @@
   <style>
     :root { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-    body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #064e3b; color: #0f172a; touch-action: none; word-break: keep-all; overflow-wrap: break-word; }
+    body { font-family: 'Jua', 'Pretendard Variable', Pretendard, system-ui, sans-serif; background: #064e3b; color: #0f172a; touch-action: none; word-break: keep-all; overflow-wrap: break-word; }
     #stage-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
     #stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; overflow: hidden; }
 
@@ -52,6 +52,13 @@
     .bin-hover-n { transform: scale(1.04); box-shadow: 0 14px 32px rgba(120,113,108,0.45); border-color: rgb(168,162,158) !important; }
     .font-cute  { font-family: 'Do Hyeon','Jua','Pretendard Variable',Pretendard,sans-serif; letter-spacing: -0.01em; }
     .font-title { font-family: 'Jua','Pretendard Variable',Pretendard,sans-serif; letter-spacing: -0.01em; }
+
+    /* 인트로 본문 글씨 1.5배 + 줄간격 (제목/큰 이모지는 그대로) */
+    #screen-intro .text-xs   { font-size: 1.125rem  !important; line-height: 1.7 !important; }
+    #screen-intro .text-sm   { font-size: 1.3125rem !important; line-height: 1.7 !important; }
+    #screen-intro .text-base { font-size: 1.5rem    !important; line-height: 1.65 !important; }
+    #screen-intro .text-lg   { font-size: 1.6875rem !important; line-height: 1.55 !important; }
+    #screen-intro .text-xl   { font-size: 1.875rem  !important; line-height: 1.5 !important; }
   </style>
 </head>
 <body>
@@ -235,19 +242,19 @@
           <!-- 오른쪽: 생각해 봐요 + 버튼 -->
           <div class="w-[55%] h-full flex flex-col gap-4">
             <div class="bg-violet-50 border-2 border-violet-200 rounded-2xl p-4 flex-1 overflow-y-auto">
-              <div class="text-xl font-title text-violet-800 mb-3">💭 생각해 봐요</div>
+              <div class="text-3xl font-title text-violet-800 mb-3">💭 생각해 봐요</div>
               <div class="space-y-3 font-cute text-slate-800">
                 <div>
-                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">1.</span><span><b>재생 자원</b>이 좋은 점은 무엇일까요?</span></div>
-                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                  <div class="flex gap-2 text-2xl leading-relaxed mb-1"><span class="text-violet-600 font-bold shrink-0">1.</span><span><b>재생 자원</b>이 좋은 점은 무엇일까요?</span></div>
+                  <textarea id="reflect-1" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-2 text-2xl resize-none text-slate-800 placeholder-slate-400 leading-relaxed"></textarea>
                 </div>
                 <div>
-                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">2.</span><span><b>비재생 자원</b>이 줄어들면 우리 생활은 어떻게 변할까요?</span></div>
-                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                  <div class="flex gap-2 text-2xl leading-relaxed mb-1"><span class="text-violet-600 font-bold shrink-0">2.</span><span><b>비재생 자원</b>이 줄어들면 우리 생활은 어떻게 변할까요?</span></div>
+                  <textarea id="reflect-2" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-2 text-2xl resize-none text-slate-800 placeholder-slate-400 leading-relaxed"></textarea>
                 </div>
                 <div>
-                  <div class="flex gap-2 text-base leading-snug mb-1"><span class="text-violet-600 font-bold shrink-0">3.</span><span>우리 집에서 가장 많이 쓰는 자원은 무엇인가요?</span></div>
-                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-1.5 text-base resize-none text-slate-800 placeholder-slate-400 leading-snug"></textarea>
+                  <div class="flex gap-2 text-2xl leading-relaxed mb-1"><span class="text-violet-600 font-bold shrink-0">3.</span><span>우리 집에서 가장 많이 쓰는 자원은 무엇인가요?</span></div>
+                  <textarea id="reflect-3" rows="2" placeholder="여기에 답을 적어 보세요" class="reflect-input w-full bg-white border-2 border-violet-200 focus:border-violet-500 outline-none rounded-xl px-3 py-2 text-2xl resize-none text-slate-800 placeholder-slate-400 leading-relaxed"></textarea>
                 </div>
               </div>
             </div>
